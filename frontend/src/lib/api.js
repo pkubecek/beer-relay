@@ -1,4 +1,6 @@
-const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+// Produkce: API se volá přes stejnou doménu (/api/...) a Vercel ho přepošle na Railway
+// (viz vercel.json) – žádné CORS. Lokálně se volá backend přímo.
+const BASE_URL = import.meta.env.DEV ? import.meta.env.VITE_API_URL || "http://localhost:8000" : "";
 const TOKEN_KEY = "auth_token";
 
 export function getToken() {
