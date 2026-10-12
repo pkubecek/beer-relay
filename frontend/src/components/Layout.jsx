@@ -89,7 +89,7 @@ export default function Layout({ children }) {
       </header>
       <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-5 py-8">{children}</main>
       <footer className="border-t border-wood/30 py-6 text-center text-xs text-forest-700/60 font-mono">
-        SAJ! ©2026
+        SAJ! | © Pepko 2026
       </footer>
     </div>
   );
