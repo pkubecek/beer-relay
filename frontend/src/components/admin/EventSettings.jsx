@@ -3,10 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { api } from "../../lib/api";
 import { STATUS_LABELS, toDateTimeInput } from "../../lib/format";
 import { Button, Card, Input, Label, Select, Textarea } from "../ui";
+import { MapPicker } from "../Map";
 
 const FIELDS = [
   "name", "slug", "location", "event_date", "start_time", "description", "status", "entries_open_at", "entry_deadline",
-  "entry_fee", "max_teams", "require_approval", "penalty_seconds_per_point", "contact_email", "website",
+  "entry_fee", "max_teams", "require_approval", "contact_email", "website", "lat", "lon",
 ];
 
 function toForm(event) {
@@ -15,6 +16,8 @@ function toForm(event) {
   f.entries_open_at = toDateTimeInput(event.entries_open_at);
   f.entry_deadline = toDateTimeInput(event.entry_deadline);
   f.require_approval = !!event.require_approval;
+  f.lat = event.lat ?? null;
+  f.lon = event.lon ?? null;
   return f;
 }
 
@@ -27,7 +30,13 @@ export default function EventSettings({ event, onSaved }) {
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
   const [error, setError] = useState("");
+  const [mapLabel, setMapLabel] = useState("");
   const update = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+
+  function handleMapPick({ lat, lon, label }) {
+    setForm((f) => ({ ...f, lat, lon, location: !f.location && label ? label : f.location }));
+    setMapLabel(label || "");
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -43,7 +52,6 @@ export default function EventSettings({ event, onSaved }) {
         entry_deadline: nullable(form.entry_deadline),
         entry_fee: nullableInt(form.entry_fee),
         max_teams: nullableInt(form.max_teams),
-        penalty_seconds_per_point: Number(form.penalty_seconds_per_point) || 0,
         contact_email: nullable(form.contact_email),
         website: nullable(form.website),
       };
@@ -95,9 +103,15 @@ export default function EventSettings({ event, onSaved }) {
             <Label>Čas startu</Label>
             <Input type="time" value={form.start_time} onChange={(e) => update("start_time", e.target.value)} />
           </div>
-          <div className="sm:col-span-2">
+          <div className="sm:col-span-2 space-y-2">
             <Label>Místo</Label>
-            <Input value={form.location} onChange={(e) => update("location", e.target.value)} />
+            <Input value={form.location} onChange={(e) => update("location", e.target.value)} placeholder="např. Hospoda U Lípy, Říp" />
+            {mapLabel && mapLabel !== form.location && (
+              <button type="button" className="text-xs text-wood hover:underline" onClick={() => update("location", mapLabel)}>
+                Použít název z mapy: „{mapLabel}“
+              </button>
+            )}
+            <MapPicker lat={form.lat} lon={form.lon} onChange={handleMapPick} />
           </div>
           <div className="sm:col-span-2">
             <Label>Popis / pokyny</Label>
@@ -140,14 +154,6 @@ export default function EventSettings({ event, onSaved }) {
             <input type="checkbox" checked={form.require_approval} onChange={(e) => update("require_approval", e.target.checked)} />
             Přihlášky musím schválit (jinak jsou rovnou potvrzené)
           </label>
-        </div>
-      </Card>
-
-      <Card className="p-5 space-y-4">
-        <h3 className="font-display text-lg font-bold uppercase">Hodnocení</h3>
-        <div className="max-w-xs">
-          <Label>Sekund za 1 trestný bod</Label>
-          <Input type="number" min={0} value={form.penalty_seconds_per_point} onChange={(e) => update("penalty_seconds_per_point", e.target.value)} />
         </div>
       </Card>
 

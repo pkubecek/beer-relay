@@ -60,7 +60,7 @@ export function formatMoney(value) {
 
 export const ROLE_LABELS = {
   user: "Závodník",
-  organizer: "Pořadatel",
+  organizer: "Závodník + pořadatel",
   admin: "Admin",
 };
 

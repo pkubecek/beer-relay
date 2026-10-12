@@ -23,7 +23,6 @@ export default function AdminEventPage() {
   const [legs, setLegs] = useState([]);
   const [categories, setCategories] = useState([]);
   const [teams, setTeams] = useState([]);
-  const [results, setResults] = useState([]);
   const [section, setSection] = useState("teams");
   const [error, setError] = useState("");
 
@@ -32,26 +31,20 @@ export default function AdminEventPage() {
       .getEvent(slug)
       .then(async (ev) => {
         if (!ev.can_manage) throw new Error("Tento závod nespravuješ.");
-        const [l, c, t, r] = await Promise.all([
+        const [l, c, t] = await Promise.all([
           api.listLegs(ev.id),
           api.listCategories(ev.id),
           api.listEntriesManage(ev.id),
-          api.getResultsManage(ev.id),
         ]);
         setEvent(ev);
         setLegs(l);
         setCategories(c);
         setTeams(t);
-        setResults(r);
       })
       .catch((e) => setError(e.message));
   }, [slug]);
 
   useEffect(loadAll, [loadAll]);
-
-  const loadResults = useCallback(() => {
-    if (event) api.getResultsManage(event.id).then(setResults).catch(() => {});
-  }, [event]);
 
   if (error) return <p className="text-punch">{error}</p>;
   if (!event) return <p className="text-forest-700/60">Načítám…</p>;
@@ -93,7 +86,7 @@ export default function AdminEventPage() {
         <TeamsManager event={event} teams={teams} legs={legs} categories={categories} onChange={loadAll} />
       )}
       {section === "results" && (
-        <ResultsEntry approvedTeams={approvedTeams} legs={legs} results={results} onChange={loadResults} />
+        <ResultsEntry event={event} approvedTeams={approvedTeams} categories={categories} onSaved={setTeams} />
       )}
     </div>
   );

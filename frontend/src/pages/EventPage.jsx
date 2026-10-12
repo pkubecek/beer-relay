@@ -7,6 +7,7 @@ import { EVENT_STATUS_TONE, formatDate, formatDateTime, formatMoney, STATUS_LABE
 import EntriesList from "../components/EntriesList";
 import ResultsTable from "../components/ResultsTable";
 import RouteLine from "../components/RouteLine";
+import { EventMap } from "../components/Map";
 
 function Fact({ label, children }) {
   if (!children) return null;
@@ -140,11 +141,16 @@ export default function EventPage() {
               <Fact label="Uzávěrka">{event.entry_deadline && formatDateTime(event.entry_deadline)}</Fact>
               <Fact label="Startovné">{event.entry_fee != null && `${formatMoney(event.entry_fee)} za tým`}</Fact>
               <Fact label="Kapacita">{`${event.team_count}${event.max_teams ? ` / ${event.max_teams}` : ""} týmů`}</Fact>
-              <Fact label="Penalizace">{`1 trestný bod = ${event.penalty_seconds_per_point} s`}</Fact>
               <Fact label="Kategorie">{categories.length > 0 && categories.map((c) => c.name).join(", ")}</Fact>
             </dl>
           </div>
           <div className="md:col-span-2">
+            {event.lat != null && event.lon != null && (
+              <div className="mb-8">
+                <h2 className="font-display text-xl font-bold uppercase mb-3">Místo</h2>
+                <EventMap lat={event.lat} lon={event.lon} label={event.location} />
+              </div>
+            )}
             <h2 className="font-display text-xl font-bold uppercase mb-3">Úseky štafety</h2>
             {legs.length === 0 ? (
               <p className="text-forest-700/60 text-sm">Úseky ještě nejsou zveřejněné.</p>

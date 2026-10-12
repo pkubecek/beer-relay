@@ -338,7 +338,7 @@ def export_entries_csv(event_id: int, session: Session = Depends(get_session), u
     buf = io.StringIO()
     writer = csv.writer(buf, delimiter=";")
     writer.writerow(
-        ["St. číslo", "Tým", "Oddíl", "Kategorie", "Stav", "Zaplaceno", "Kapitán", "E-mail", "Telefon"]
+        ["St. číslo", "Tým", "Oddíl", "Kategorie", "Stav", "Zaplaceno", "Pořadí", "Čas", "Kapitán", "E-mail", "Telefon"]
         + [f"{leg.order}. úsek – {leg.name}" for leg in legs]
         + ["Poznámka", "Přihlášeno"]
     )
@@ -352,6 +352,8 @@ def export_entries_csv(event_id: int, session: Session = Depends(get_session), u
                 cats.get(t.category_id, ""),
                 TEAM_STATUS_CZ[t.status],
                 "ano" if t.paid else "ne",
+                "DNF" if t.dnf else (t.place or ""),
+                t.finish_time or "",
                 t.contact_name,
                 t.contact_email,
                 t.contact_phone or "",

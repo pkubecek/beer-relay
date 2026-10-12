@@ -90,9 +90,21 @@ class PasswordChange(SQLModel):
 
 
 class AdminUserUpdate(SQLModel):
+    """Úprava účtu adminem. Roli lze nastavit jen na závodník / pořadatel – admin se přiděluje přes ADMIN_EMAILS."""
     role: Optional[UserRole] = None
     is_active: Optional[bool] = None
     new_password: Optional[str] = Field(default=None, min_length=8, max_length=72)
+    email: Optional[EmailStr] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    birth_year: Optional[int] = None
+    club: Optional[str] = None
+    phone: Optional[str] = None
+
+
+class AdminUserRead(UserRead):
+    events_count: int = 0      # kolik závodů pořádá
+    entries_count: int = 0     # v kolika týmech je kapitán
 
 
 class AuthResponse(SQLModel):
@@ -112,7 +124,8 @@ class EventBase(SQLModel):
     event_date: Optional[date] = None
     start_time: Optional[str] = None            # "10:00"
     description: Optional[str] = None
-    penalty_seconds_per_point: int = 60          # 1 trestný bod = 60 s
+    lat: Optional[float] = None                  # místo závodu (WGS84)
+    lon: Optional[float] = None
     status: EventStatus = EventStatus.draft
     # přihlášky (po vzoru ORISu)
     entries_open_at: Optional[datetime] = None   # od kdy lze přihlašovat (místní čas)
@@ -126,6 +139,8 @@ class EventBase(SQLModel):
 
 class Event(EventBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
+    # Penalizace se nepoužívá; sloupec zůstává jen kvůli existujícím databázím (NOT NULL).
+    penalty_seconds_per_point: int = 0
     organizer_id: Optional[int] = Field(default=None, foreign_key="user.id")
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
@@ -145,7 +160,8 @@ class EventUpdate(SQLModel):
     event_date: Optional[date] = None
     start_time: Optional[str] = None
     description: Optional[str] = None
-    penalty_seconds_per_point: Optional[int] = None
+    lat: Optional[float] = None
+    lon: Optional[float] = None
     status: Optional[EventStatus] = None
     entries_open_at: Optional[datetime] = None
     entry_deadline: Optional[datetime] = None
@@ -249,6 +265,10 @@ class Team(SQLModel, table=True):
     status: TeamStatus = TeamStatus.pending
     paid: bool = False
     start_number: Optional[int] = None
+    # výsledek týmu – stačí pořadí, čas je nepovinný
+    place: Optional[int] = None              # pořadí (v kategorii, pokud závod kategorie má)
+    finish_time: Optional[str] = None        # volný text, např. "1:23:45"
+    dnf: bool = False                        # nedokončil / diskvalifikace
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: Optional[datetime] = None
 
@@ -308,6 +328,9 @@ class TeamPublic(SQLModel):
 
 
 class TeamRead(TeamPublic):
+    place: Optional[int] = None
+    finish_time: Optional[str] = None
+    dnf: bool = False
     captain_id: Optional[int] = None
     contact_name: str
     contact_email: str
@@ -340,13 +363,19 @@ class StartNumbersRequest(SQLModel):
     only_approved: bool = True
 
 
+class TeamResultIn(SQLModel):
+    team_id: int
+    place: Optional[int] = Field(default=None, ge=1)
+    finish_time: Optional[str] = None
+    dnf: bool = False
+
+
 # =====================================================================
-# Result (čas + penalta týmu na úseku)
+# Result (časy po úsecích – starý způsob, ponecháno kvůli existujícím databázím)
 # =====================================================================
 
 class ResultBase(SQLModel):
     time_seconds: Optional[int] = None  # None = ještě nezaběhnuto / DNF
-    penalty_points: int = 0
     dnf: bool = False
     note: Optional[str] = None
 
@@ -355,6 +384,7 @@ class Result(ResultBase, table=True):
     __table_args__ = (UniqueConstraint("team_id", "leg_id", name="uq_result_team_leg"),)
 
     id: Optional[int] = Field(default=None, primary_key=True)
+    penalty_points: int = 0  # nepoužívá se, jen kvůli existujícím databázím
     team_id: int = Field(foreign_key="team.id")
     leg_id: int = Field(foreign_key="leg.id")
 

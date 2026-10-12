@@ -37,6 +37,8 @@ export default function MyEntriesPage() {
                 <div className="flex flex-wrap items-center gap-2 mt-1">
                   <Badge tone={TEAM_STATUS_TONE[e.status]}>{TEAM_STATUS_LABELS[e.status]}</Badge>
                   {e.category_name && <Badge>{e.category_name}</Badge>}
+                  {e.place != null && <Badge tone="gold">🏆 {e.place}. místo</Badge>}
+                  {e.dnf && <Badge tone="punch">DNF</Badge>}
                   <Badge tone={e.paid ? "leaf" : "neutral"}>{e.paid ? "Zaplaceno" : "Nezaplaceno"}</Badge>
                   {e.is_captain ? <Badge tone="gold">Kapitán</Badge> : <span className="text-xs text-forest-700/60">kapitán: {e.contact_name}</span>}
                 </div>

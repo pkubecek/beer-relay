@@ -15,7 +15,7 @@ frontend v Reactu (Vite + Tailwind), připraveno na Railway (backend) + Vercel (
 **Kalendář závodů**
 - Nadcházející / proběhlé / vše, hledání podle názvu a místa.
 - Detail závodu: datum a čas startu, místo, pořadatel, kontakt, web, termíny přihlášek,
-  startovné, kapacita, kategorie, úseky štafety.
+  startovné, kapacita, kategorie, úseky štafety a mapa místa (výběr bodu z mapy OSM, hledání přes Nominatim).
 
 **Přihlášky**
 - Přihlášku podává přihlášený uživatel (kapitán): název týmu, oddíl, kategorie, telefon
@@ -30,11 +30,11 @@ frontend v Reactu (Vite + Tailwind), připraveno na Railway (backend) + Vercel (
 - Nastavení závodu, kategorie (s volitelnou kapacitou), úseky.
 - Přihlášky: schválení/zamítnutí (nebo automatické schválení), zaplaceno, kategorie,
   startovní čísla (ručně nebo hromadně po kategoriích), dohláška po uzávěrce, export CSV (pro Excel).
-- Výsledky: časy a trestné body po úsecích, DNF.
+- Výsledky: ke každé štafetě pořadí (v kategorii), nepovinně čas, DNF.
 
 **Výsledky**
-- Výsledek = součet časů úseků + trestné body × sekundy za bod (nastavení závodu).
-- Pořadí celkově i v kategoriích, stejný čas = stejné místo, DNF za těmi, kdo doběhli.
+- Pořadí zadává pořadatel ručně, čas je jen informativní.
+- Výsledková listina po kategoriích, DNF na konci.
 
 ## Struktura projektu
 

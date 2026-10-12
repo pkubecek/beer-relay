@@ -97,17 +97,23 @@ def test_full_entry_and_results_flow(client):
     csv = client.get(f"/api/events/{ev['id']}/entries.csv", headers=org_h)
     assert csv.status_code == 200 and "Lesní vlci" in csv.text and "Jana Malá" in csv.text
 
-    # výsledky
-    for t, times in ((team, [600, 700, 800]), (t2, [500, 600, 700])):
-        for leg, sec in zip(legs, times):
-            r = client.put("/api/results", json={"team_id": t["id"], "leg_id": leg["id"], "time_seconds": sec, "penalty_points": 1}, headers=org_h)
-            assert r.status_code == 200
-    assert client.put("/api/results", json={"team_id": team["id"], "leg_id": legs[0]["id"], "time_seconds": 1}, headers=cap_h).status_code == 403
+    # výsledky – jen pořadí, čas nepovinný
+    rows = [{"team_id": team["id"], "place": 1, "finish_time": "1:05:00"}, {"team_id": t2["id"], "place": 1}]
+    assert client.put(f"/api/events/{ev['id']}/results", json=rows, headers=cap_h).status_code == 403
+    r = client.put(f"/api/events/{ev['id']}/results", json=rows, headers=org_h)
+    assert r.status_code == 200, r.text
+    assert client.put(f"/api/events/{ev['id']}/results", json=[{"team_id": 99999, "place": 1}], headers=org_h).status_code == 400
     lb = client.get(f"/api/events/{ev['id']}/results").json()
-    assert [r["team_name"] for r in lb["results"]] == ["Mixíci", "Lesní vlci"]
-    assert lb["results"][0]["rank"] == 1 and lb["results"][0]["category_rank"] == 1
-    assert lb["results"][1]["category_rank"] == 1 and lb["results"][1]["total_score_seconds"] == 2100 + 180
-    assert lb["results"][1]["legs"][1]["runner"] == "Jana Malá"
+    # seřazeno po kategoriích (Muži, Mix), zamítnutý tým se nezobrazí
+    assert [r["team_name"] for r in lb["results"]] == ["Lesní vlci", "Mixíci"]
+    assert lb["results"][0]["finish_time"] == "1:05:00" and lb["results"][1]["finish_time"] is None
+    assert lb["results"][0]["runners"][1] == "Jana Malá"
+    # DNF
+    client.put(f"/api/events/{ev['id']}/results", json=[{"team_id": t2["id"], "place": 3, "dnf": True}], headers=org_h)
+    lb = client.get(f"/api/events/{ev['id']}/results").json()
+    assert lb["results"][1]["dnf"] is True and lb["results"][1]["place"] is None
+    mine = client.get("/api/me/entries", headers=cap_h).json()
+    assert mine[0]["place"] == 1
 
 
 def test_deadline_and_permissions(client):
@@ -157,4 +163,40 @@ def test_migration_adds_columns(tmp_path):
     with make_client(db) as c:
         ev = c.get("/api/events/stara").json()
         assert ev["require_approval"] is True and ev["team_count"] == 1
+        assert "penalty_seconds_per_point" not in ev
+        # nový závod jde založit i nad starou tabulkou s NOT NULL sloupcem penalizace
+        from tests.conftest import register
+        h, u = register(c, "admin@test.cz")
+        r = c.post("/api/events", json={"name": "Nový", "lat": 50.66, "lon": 14.03}, headers=h)
+        assert r.status_code == 201, r.text
+        assert r.json()["lat"] == 50.66
         assert c.get("/api/events/1/entries").json()[0]["name"] == "Veteráni"
+
+
+def test_user_management(client):
+    admin_h, admin = register(client, "admin@test.cz", "Ada", "Adminová")
+    h, u = register(client, "karel@test.cz", "Karel", "Novák")
+    # běžný uživatel nesmí
+    assert client.get("/api/users", headers=h).status_code == 403
+    assert client.patch(f"/api/users/{u['id']}", json={"role": "organizer"}, headers=h).status_code == 403
+    # role: jen závodník / pořadatel
+    assert client.patch(f"/api/users/{u['id']}", json={"role": "admin"}, headers=admin_h).status_code == 400
+    r = client.patch(f"/api/users/{u['id']}", json={"role": "organizer"}, headers=admin_h)
+    assert r.status_code == 200 and r.json()["role"] == "organizer"
+    assert client.post("/api/events", json={"name": "Můj závod"}, headers=h).status_code == 201
+    users = {x["email"]: x for x in client.get("/api/users", headers=admin_h).json()}
+    assert users["karel@test.cz"]["events_count"] == 1 and "password_hash" not in users["karel@test.cz"]
+    # zpět na závodníka -> nesmí zakládat
+    client.patch(f"/api/users/{u['id']}", json={"role": "user"}, headers=admin_h)
+    assert client.post("/api/events", json={"name": "Další"}, headers=h).status_code == 403
+    # úprava profilu a e-mailu
+    r = client.patch(f"/api/users/{u['id']}", json={"first_name": "Karl", "email": "karl@test.cz", "club": "SK"}, headers=admin_h)
+    assert r.json()["email"] == "karl@test.cz" and r.json()["first_name"] == "Karl"
+    assert client.patch(f"/api/users/{u['id']}", json={"email": "admin@test.cz"}, headers=admin_h).status_code == 400
+    # admina nejde měnit / mazat
+    assert client.patch(f"/api/users/{admin['id']}", json={"role": "user"}, headers=admin_h).status_code == 400
+    assert client.delete(f"/api/users/{admin['id']}", headers=admin_h).status_code == 400
+    # smazání – závod zůstane
+    assert client.delete(f"/api/users/{u['id']}", headers=admin_h).status_code == 204
+    assert client.post("/api/auth/login", json={"email": "karl@test.cz", "password": "tajneheslo"}).status_code == 401
+    assert len(client.get("/api/events/manage", headers=admin_h).json()) == 1

@@ -95,6 +95,7 @@ export const api = {
   // uživatelé (admin)
   listUsers: (params = {}) => request(`/api/users${qs(params)}`),
   updateUser: (id, data) => request(`/api/users/${id}`, { method: "PATCH", body: data }),
+  deleteUser: (id) => request(`/api/users/${id}`, { method: "DELETE" }),
 
   // závody
   listEvents: (params = {}) => request(`/api/events${qs(params)}`),
@@ -140,7 +141,6 @@ export const api = {
   },
 
   // výsledky
-  upsertResult: (data) => request("/api/results", { method: "PUT", body: data }),
+  saveResults: (eventId, rows) => request(`/api/events/${eventId}/results`, { method: "PUT", body: rows }),
   getLeaderboard: (eventId) => request(`/api/events/${eventId}/results`),
-  getResultsManage: (eventId) => request(`/api/events/${eventId}/results/manage`),
 };

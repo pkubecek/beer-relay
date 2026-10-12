@@ -1,114 +1,129 @@
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { api } from "../../lib/api";
 import { Button, Card, Input } from "../ui";
-import { formatSeconds, parseTimeToSeconds } from "../../lib/format";
 
-export default function ResultsEntry({ approvedTeams, legs, results, onChange }) {
-  const resultMap = useMemo(() => {
-    const m = {};
-    for (const r of results) m[`${r.team_id}-${r.leg_id}`] = r;
-    return m;
-  }, [results]);
+function toDraft(t) {
+  return { place: t.place ?? "", finish_time: t.finish_time ?? "", dnf: !!t.dnf };
+}
 
-  const [drafts, setDrafts] = useState({});
-  const [savingKey, setSavingKey] = useState(null);
+/** Zadání výsledků: ke každé štafetě pořadí, čas je nepovinný. */
+export default function ResultsEntry({ event, approvedTeams, categories, onSaved }) {
+  const [drafts, setDrafts] = useState(() => Object.fromEntries(approvedTeams.map((t) => [t.id, toDraft(t)])));
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState("");
+  const [error, setError] = useState("");
 
-  function draftFor(teamId, legId) {
-    const key = `${teamId}-${legId}`;
-    if (drafts[key]) return drafts[key];
-    const existing = resultMap[key];
-    return {
-      time: existing?.time_seconds != null ? formatSeconds(existing.time_seconds) : "",
-      penalty_points: existing?.penalty_points ?? 0,
-      dnf: existing?.dnf ?? false,
-    };
+  const groups = useMemo(() => {
+    const sortTeams = (list) =>
+      [...list].sort((a, b) => (a.start_number ?? 1e9) - (b.start_number ?? 1e9) || a.name.localeCompare(b.name, "cs"));
+    if (!categories.length) return [{ key: "all", name: null, teams: sortTeams(approvedTeams) }];
+    const g = categories.map((c) => ({ key: c.id, name: c.name, teams: sortTeams(approvedTeams.filter((t) => t.category_id === c.id)) }));
+    const rest = approvedTeams.filter((t) => !categories.some((c) => c.id === t.category_id));
+    if (rest.length) g.push({ key: "none", name: "Bez kategorie", teams: sortTeams(rest) });
+    return g.filter((x) => x.teams.length);
+  }, [approvedTeams, categories]);
+
+  const draftOf = (t) => drafts[t.id] ?? toDraft(t);
+
+  function update(t, patch) {
+    setMsg("");
+    setDrafts((d) => ({ ...d, [t.id]: { ...(d[t.id] ?? toDraft(t)), ...patch } }));
   }
 
-  function updateDraft(teamId, legId, patch) {
-    const key = `${teamId}-${legId}`;
-    setDrafts((d) => ({ ...d, [key]: { ...draftFor(teamId, legId), ...patch } }));
+  // Duplicitní pořadí v rámci skupiny – jen upozornění (shoda je povolená).
+  function duplicates(teams) {
+    const seen = {};
+    for (const t of teams) {
+      const { place: p, dnf } = draftOf(t);
+      if (p !== "" && !dnf) seen[p] = (seen[p] || 0) + 1;
+    }
+    return new Set(Object.keys(seen).filter((k) => seen[k] > 1).map(Number));
   }
 
-  async function save(teamId, legId) {
-    const key = `${teamId}-${legId}`;
-    const draft = draftFor(teamId, legId);
-    setSavingKey(key);
+  async function save() {
+    setSaving(true);
+    setError("");
     try {
-      await api.upsertResult({
-        team_id: teamId,
-        leg_id: legId,
-        time_seconds: draft.dnf ? null : parseTimeToSeconds(draft.time),
-        penalty_points: Number(draft.penalty_points) || 0,
-        dnf: draft.dnf,
+      const rows = approvedTeams.map((t) => {
+        const d = draftOf(t);
+        return {
+          team_id: t.id,
+          place: d.place === "" || d.dnf ? null : Number(d.place),
+          finish_time: d.finish_time || null,
+          dnf: d.dnf,
+        };
       });
-      onChange();
-    } catch (err) {
-      alert(err.message);
+      onSaved(await api.saveResults(event.id, rows));
+      setMsg("Výsledky uloženy ✓");
+    } catch (e) {
+      setError(e.message);
     } finally {
-      setSavingKey(null);
+      setSaving(false);
     }
   }
 
   if (approvedTeams.length === 0) {
     return <p className="text-sm text-forest-700/60">Nejdřív schval alespoň jeden tým.</p>;
   }
-  if (legs.length === 0) {
-    return <p className="text-sm text-forest-700/60">Nejdřív přidej úseky štafety.</p>;
-  }
 
   return (
     <div className="space-y-4">
-      {approvedTeams.map((team) => (
-        <Card key={team.id} className="p-4">
-          <p className="font-display font-bold text-lg uppercase mb-3">{team.name}</p>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {legs.map((leg) => {
-              const draft = draftFor(team.id, leg.id);
-              const key = `${team.id}-${leg.id}`;
-              return (
-                <div key={leg.id} className="border border-wood/20 rounded-md p-3">
-                  <p className="text-xs font-mono uppercase text-wood mb-2">
-                    Úsek {leg.order} · {leg.name}
-                  </p>
-                  <div className="flex items-center gap-2 mb-2">
+      <p className="text-sm text-forest-700/70">
+        Ke každé štafetě napiš pořadí{categories.length > 0 && " v její kategorii"}. Čas je nepovinný (např. 1:23:45).
+        Týmy bez pořadí se ve výsledcích nezobrazí.
+      </p>
+      {groups.map((g) => {
+        const dup = duplicates(g.teams);
+        return (
+          <Card key={g.key} className="p-4">
+            {g.name && <h3 className="font-display text-lg font-bold uppercase mb-3">{g.name}</h3>}
+            <div className="divide-y divide-wood/10">
+              {g.teams.map((t) => {
+                const d = draftOf(t);
+                return (
+                  <div key={t.id} className="flex flex-wrap items-center gap-3 py-2">
+                    <span className="w-10 font-mono text-wood text-sm">{t.start_number ?? ""}</span>
+                    <span className="flex-1 min-w-[140px] font-semibold">{t.name}</span>
+                    <div className="flex items-center gap-1">
+                      <Input
+                        type="number"
+                        min={1}
+                        placeholder="Pořadí"
+                        aria-label={`Pořadí ${t.name}`}
+                        value={d.place}
+                        disabled={d.dnf}
+                        onChange={(e) => update(t, { place: e.target.value })}
+                        className={`!w-20 text-center font-mono ${dup.has(Number(d.place)) ? "!border-gold" : ""}`}
+                      />
+                      <span className="text-sm">.</span>
+                    </div>
                     <Input
-                      placeholder="mm:ss"
-                      value={draft.time}
-                      disabled={draft.dnf}
-                      onChange={(e) => updateDraft(team.id, leg.id, { time: e.target.value })}
-                      className="!py-1 text-sm"
+                      placeholder="čas (nepovinný)"
+                      value={d.finish_time}
+                      disabled={d.dnf}
+                      onChange={(e) => update(t, { finish_time: e.target.value })}
+                      className="!w-36 font-mono"
                     />
-                    <Input
-                      type="number"
-                      min={0}
-                      title="Trestné body"
-                      value={draft.penalty_points}
-                      onChange={(e) => updateDraft(team.id, leg.id, { penalty_points: e.target.value })}
-                      className="!py-1 text-sm w-20"
-                    />
+                    <label className="flex items-center gap-1.5 text-xs text-forest-700/70">
+                      <input type="checkbox" checked={d.dnf} onChange={(e) => update(t, { dnf: e.target.checked })} />
+                      DNF
+                    </label>
                   </div>
-                  <label className="flex items-center gap-1.5 text-xs text-forest-700/70 mb-2">
-                    <input
-                      type="checkbox"
-                      checked={draft.dnf}
-                      onChange={(e) => updateDraft(team.id, leg.id, { dnf: e.target.checked })}
-                    />
-                    DNF (nedokončil)
-                  </label>
-                  <Button
-                    variant="outline"
-                    className="w-full !py-1 text-xs"
-                    onClick={() => save(team.id, leg.id)}
-                    disabled={savingKey === key}
-                  >
-                    {savingKey === key ? "Ukládám…" : "Uložit"}
-                  </Button>
-                </div>
-              );
-            })}
-          </div>
-        </Card>
-      ))}
+                );
+              })}
+            </div>
+            {dup.size > 0 && <p className="text-xs text-wood mt-2">Pozor: stejné pořadí má víc týmů ({[...dup].join(", ")}.).</p>}
+          </Card>
+        );
+      })}
+      <div className="flex items-center gap-3 flex-wrap">
+        <Button onClick={save} disabled={saving}>{saving ? "Ukládám…" : "Uložit výsledky"}</Button>
+        {msg && <span className="text-leaf text-sm">{msg}</span>}
+        {error && <span className="text-punch text-sm">{error}</span>}
+        <div className="flex-1" />
+        <Link to={`/zavody/${event.slug}`} className="text-sm text-wood hover:underline">Zobrazit výsledky ↗</Link>
+      </div>
     </div>
   );
 }

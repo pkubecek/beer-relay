@@ -102,6 +102,9 @@ def team_to_read(team: Team) -> TeamRead:
         legacy_members=team.members,
         note=team.note,
         paid=team.paid,
+        place=team.place,
+        finish_time=team.finish_time,
+        dnf=team.dnf,
         updated_at=team.updated_at,
         members=[
             TeamMemberRead(id=m.id, leg_id=m.leg_id, name=m.name, email=m.email, user_id=m.user_id)

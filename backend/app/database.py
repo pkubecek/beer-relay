@@ -1,6 +1,7 @@
 import os
 
 from sqlalchemy import inspect, text
+from sqlalchemy.engine import make_url
 from sqlmodel import SQLModel, create_engine, Session
 
 # SQLite lokálně i na Railway (tam na připojeném volume, např. sqlite:////data/beerrelay.db).
@@ -12,7 +13,14 @@ if DATABASE_URL.startswith("postgres://"):
 
 
 def _make_engine(url: str):
-    connect_args = {"check_same_thread": False} if url.startswith("sqlite") else {}
+    connect_args = {}
+    if url.startswith("sqlite"):
+        connect_args = {"check_same_thread": False}
+        db_path = make_url(url).database
+        if db_path and db_path != ":memory:":
+            folder = os.path.dirname(os.path.abspath(db_path))
+            os.makedirs(folder, exist_ok=True)  # SQLite složku sama nevytvoří
+            print(f"[db] SQLite soubor: {os.path.abspath(db_path)}", flush=True)
     return create_engine(url, echo=False, connect_args=connect_args)
 
 

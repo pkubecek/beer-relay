@@ -31,7 +31,13 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Pivní štafety", version="2.0.0", lifespan=lifespan)
 
-allowed_origins = [o.strip() for o in os.getenv("ALLOWED_ORIGINS", "http://localhost:5173").split(",") if o.strip()]
+# Tolerantní k překlepům: mezery, uvozovky a lomítko na konci se ořežou.
+allowed_origins = [
+    o.strip().strip("'\"").rstrip("/")
+    for o in os.getenv("ALLOWED_ORIGINS", "http://localhost:5173").split(",")
+    if o.strip().strip("'\"")
+]
+print(f"[cors] Povolené origins: {allowed_origins}", flush=True)
 
 app.add_middleware(
     CORSMiddleware,
