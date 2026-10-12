@@ -54,7 +54,7 @@ function OrganizerRequestCard({ user, setUser }) {
       ) : (
         <div className="space-y-3">
           <p className="text-sm text-forest-700/70">
-            Chceš pořádat vlastní štafetu? Požádej admina o možnost zakládat závody.
+            Chceš pořádat vlastní závod? Požádej admina o možnost zakládat závody.
           </p>
           <div>
             <Label>Zpráva pro admina (nepovinné)</Label>
