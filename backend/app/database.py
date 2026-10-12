@@ -32,7 +32,7 @@ def _sql_default(column) -> str:
         return ""
     value = default.arg
     if isinstance(value, bool):
-        return f" DEFAULT {1 if value else 0}"
+        return f" DEFAULT {'TRUE' if value else 'FALSE'}"
     if isinstance(value, (int, float)):
         return f" DEFAULT {value}"
     if hasattr(value, "value"):  # Enum
