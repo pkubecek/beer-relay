@@ -24,8 +24,8 @@ body {
 }
 
 .route-line {
-  @apply w-px bg-route-dash flex-1;
-  min-height: 1.5rem;
+  @apply w-0.5 bg-route-dash shrink-0;
+  height: 1.5rem;
 }
 
 *:focus-visible {

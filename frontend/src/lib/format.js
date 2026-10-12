@@ -31,8 +31,8 @@ export function formatDate(dateStr) {
 
 export const STATUS_LABELS = {
   draft: "Koncept",
-  open: "Registrace otevřena",
-  closed: "Registrace uzavřena",
+  open: "Přihlášky otevřeny",
+  closed: "Přihlášky uzavřeny",
   finished: "Vyhodnoceno",
 };
 
@@ -41,3 +41,28 @@ export const TEAM_STATUS_LABELS = {
   approved: "Schváleno",
   rejected: "Zamítnuto",
 };
+
+export function formatDateTime(value) {
+  if (!value) return "";
+  const d = new Date(value);
+  return d.toLocaleString("cs-CZ", { day: "numeric", month: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" });
+}
+
+// "2026-05-01T23:59:00" -> "2026-05-01T23:59" pro <input type="datetime-local">
+export function toDateTimeInput(value) {
+  return value ? String(value).slice(0, 16) : "";
+}
+
+export function formatMoney(value) {
+  if (value === null || value === undefined) return "";
+  return `${value.toLocaleString("cs-CZ")} Kč`;
+}
+
+export const ROLE_LABELS = {
+  user: "Závodník",
+  organizer: "Pořadatel",
+  admin: "Admin",
+};
+
+export const EVENT_STATUS_TONE = { draft: "neutral", open: "leaf", closed: "gold", finished: "neutral" };
+export const TEAM_STATUS_TONE = { pending: "gold", approved: "leaf", rejected: "punch" };

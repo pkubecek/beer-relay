@@ -1,13 +1,91 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlmodel import Session, select
 
-from ..models import AdminLogin, Token
-from ..auth import verify_admin_password, create_access_token
+from ..auth import (
+    apply_bootstrap_admin,
+    create_access_token,
+    get_current_user,
+    hash_password,
+    verify_password,
+)
+from ..database import get_session
+from ..models import (
+    AuthResponse,
+    PasswordChange,
+    TeamMember,
+    User,
+    UserLogin,
+    UserRead,
+    UserRegister,
+    UserUpdate,
+)
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 
-@router.post("/login", response_model=Token)
-def login(payload: AdminLogin):
-    if not verify_admin_password(payload.password):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Špatné heslo")
-    return Token(access_token=create_access_token())
+def _auth_response(user: User) -> AuthResponse:
+    return AuthResponse(access_token=create_access_token(user), user=UserRead.model_validate(user))
+
+
+@router.post("/register", response_model=AuthResponse, status_code=201)
+def register(payload: UserRegister, session: Session = Depends(get_session)):
+    email = payload.email.lower().strip()
+    if session.exec(select(User).where(User.email == email)).first():
+        raise HTTPException(status_code=400, detail="Účet s tímto e-mailem už existuje")
+    if not payload.first_name.strip() or not payload.last_name.strip():
+        raise HTTPException(status_code=422, detail="Vyplň jméno i příjmení")
+
+    data = payload.model_dump(exclude={"email", "password"})
+    user = User(**data, email=email, password_hash=hash_password(payload.password))
+    apply_bootstrap_admin(user)
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+
+    # Propojit s týmy, kde už byl uveden jako člen pod tímto e-mailem.
+    for member in session.exec(select(TeamMember).where(TeamMember.email == email, TeamMember.user_id == None)).all():  # noqa: E711
+        member.user_id = user.id
+        session.add(member)
+    session.commit()
+
+    return _auth_response(user)
+
+
+@router.post("/login", response_model=AuthResponse)
+def login(payload: UserLogin, session: Session = Depends(get_session)):
+    user = session.exec(select(User).where(User.email == payload.email.lower().strip())).first()
+    if not user or not verify_password(payload.password, user.password_hash):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Špatný e-mail nebo heslo")
+    if not user.is_active:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Účet je zablokovaný")
+    if apply_bootstrap_admin(user):
+        session.add(user)
+        session.commit()
+        session.refresh(user)
+    return _auth_response(user)
+
+
+@router.get("/me", response_model=UserRead)
+def me(user: User = Depends(get_current_user)):
+    return user
+
+
+@router.patch("/me", response_model=UserRead)
+def update_me(payload: UserUpdate, user: User = Depends(get_current_user), session: Session = Depends(get_session)):
+    for k, v in payload.model_dump(exclude_unset=True).items():
+        if k in ("first_name", "last_name") and (v is None or not str(v).strip()):
+            raise HTTPException(status_code=422, detail="Jméno a příjmení nesmí být prázdné")
+        setattr(user, k, v)
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+    return user
+
+
+@router.post("/me/password", status_code=204)
+def change_password(payload: PasswordChange, user: User = Depends(get_current_user), session: Session = Depends(get_session)):
+    if not verify_password(payload.current_password, user.password_hash):
+        raise HTTPException(status_code=400, detail="Současné heslo nesedí")
+    user.password_hash = hash_password(payload.new_password)
+    session.add(user)
+    session.commit()
