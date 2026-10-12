@@ -44,9 +44,6 @@ export default function HomePage() {
     <div>
       <div className="mb-6">
         <h1 className="font-display text-4xl md:text-5xl font-extrabold uppercase tracking-tight text-forest-900">Kalendář štafet</h1>
-        <p className="text-forest-700/70 mt-2 max-w-xl">
-          Mapa, buzola a v cíli zasloužené pivo. Vyber si závod, přihlas tým nebo se podívej na výsledky.
-        </p>
       </div>
 
       <div className="flex flex-wrap items-center gap-3 mb-6">
