@@ -32,9 +32,7 @@ export default function Layout({ children }) {
       <header className="bg-forest-900 text-foam relative">
         <div className="max-w-5xl mx-auto px-4 sm:px-5 py-4 flex items-center justify-between gap-4">
           <Link to="/" className="flex items-center gap-3 group" onClick={close}>
-            <span className="leg-marker !bg-gold !border-forest-900 !text-forest-900 group-hover:rotate-6 transition-transform">
-              🍺
-            </span>
+            <img src="/logo-gold.svg" alt="" className="w-11 h-11 md:w-12 md:h-12 group-hover:rotate-6 transition-transform" />
             <span className="font-display text-2xl md:text-3xl font-extrabold tracking-tight uppercase">Pivní štafety</span>
           </Link>
           <button
