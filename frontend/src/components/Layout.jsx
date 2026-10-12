@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { Link, NavLink, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { api } from "../lib/api";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { hasRole, useAuth } from "../lib/auth";
 
 function NavItem({ to, children, onClick }) {
@@ -19,7 +20,16 @@ export default function Layout({ children }) {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [open, setOpen] = useState(false);
+  const [pending, setPending] = useState(0);
+  const location = useLocation();
   const close = () => setOpen(false);
+  const isAdmin = hasRole(user, "admin");
+
+  // počet čekajících žádostí o pořádání (jen admin), obnoví se při změně stránky
+  useEffect(() => {
+    if (!isAdmin) return;
+    api.pendingRequestsCount().then((r) => setPending(r.count)).catch(() => {});
+  }, [isAdmin, location.pathname]);
 
   function handleLogout() {
     logout();
@@ -49,7 +59,16 @@ export default function Layout({ children }) {
             <NavItem to="/" onClick={close}>Kalendář</NavItem>
             {user && <NavItem to="/moje-prihlasky" onClick={close}>Moje přihlášky</NavItem>}
             {hasRole(user, "organizer") && <NavItem to="/admin" onClick={close}>Správa závodů</NavItem>}
-            {hasRole(user, "admin") && <NavItem to="/admin/uzivatele" onClick={close}>Uživatelé</NavItem>}
+            {isAdmin && (
+              <NavItem to="/admin/uzivatele" onClick={close}>
+                Uživatelé
+                {pending > 0 && (
+                  <span className="ml-1.5 inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-punch text-foam text-xs font-bold" title="Čekající žádosti o pořádání">
+                    {pending}
+                  </span>
+                )}
+              </NavItem>
+            )}
             {user ? (
               <>
                 <NavItem to="/ucet" onClick={close}>👤 {user.first_name}</NavItem>

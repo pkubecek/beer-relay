@@ -6,6 +6,7 @@ import ProfileFields from "../components/ProfileFields";
 
 const FILTERS = [
   { key: "", label: "Všichni" },
+  { key: "requests", label: "Čekající žádosti" },
   { key: "user", label: "Závodníci" },
   { key: "organizer", label: "Mohou zakládat závody" },
   { key: "admin", label: "Admin" },
@@ -96,6 +97,7 @@ function UserCard({ user, onChange, onRemove }) {
             {user.first_name} {user.last_name}
             <Badge tone={isAdmin ? "punch" : user.role === "organizer" ? "gold" : "neutral"}>{ROLE_LABELS[user.role]}</Badge>
             {!user.is_active && <Badge tone="punch">zablokován</Badge>}
+            {user.organizer_request_at && user.role === "user" && <Badge tone="gold">žádá o pořádání</Badge>}
           </p>
           <p className="text-xs text-forest-700/60 font-mono break-all">{user.email}</p>
           <p className="text-xs text-forest-700/60">
@@ -158,12 +160,32 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     const t = setTimeout(() => {
-      api.listUsers({ q, role }).then(setUsers).catch((e) => setError(e.message));
+      const params = role === "requests" ? { q, requests: true } : { q, role };
+      api.listUsers(params).then(setUsers).catch((e) => setError(e.message));
     }, 250);
     return () => clearTimeout(t);
   }, [q, role]);
 
-  const replace = (u) => setUsers((list) => list.map((x) => (x.id === u.id ? u : x)));
+  const [requests, setRequests] = useState([]);
+  const loadRequests = () => api.listUsers({ requests: true }).then(setRequests).catch(() => {});
+  useEffect(() => {
+    loadRequests();
+  }, []);
+
+  async function resolve(u, approve) {
+    try {
+      const updated = await api.updateUser(u.id, approve ? { role: "organizer" } : { dismiss_request: true });
+      setRequests((list) => list.filter((x) => x.id !== u.id));
+      setUsers((list) => list?.map((x) => (x.id === u.id ? updated : x)));
+    } catch (e) {
+      setError(e.message);
+    }
+  }
+
+  const replace = (u) => {
+    setUsers((list) => list.map((x) => (x.id === u.id ? u : x)));
+    if (!u.organizer_request_at || u.role !== "user") setRequests((list) => list.filter((x) => x.id !== u.id));
+  };
   const removeFromList = (id) => setUsers((list) => list.filter((x) => x.id !== id));
 
   return (
@@ -176,6 +198,32 @@ export default function AdminUsersPage() {
         Každý účet je <strong>Závodník</strong> – může přihlašovat týmy. Zaškrtnutím „Může zakládat závody“ mu dáš právo
         zakládat a spravovat vlastní závody.
       </p>
+      {requests.length > 0 && (
+        <Card className="p-4 mb-6 border-gold bg-gold/10">
+          <h2 className="font-display text-lg font-bold uppercase mb-3">Žádosti o pořádání ({requests.length})</h2>
+          <div className="divide-y divide-wood/15">
+            {requests.map((u) => (
+              <div key={u.id} className="py-2 flex items-start justify-between gap-3 flex-wrap">
+                <div className="min-w-0">
+                  <p className="font-semibold">
+                    {u.first_name} {u.last_name} <span className="text-xs font-mono text-forest-700/60">{u.email}</span>
+                  </p>
+                  <p className="text-xs text-forest-700/60">
+                    požádal {formatDate(u.organizer_request_at.slice(0, 10))}
+                    {u.club && ` · ${u.club}`}
+                  </p>
+                  {u.organizer_request_note && <p className="text-sm italic mt-1">„{u.organizer_request_note}“</p>}
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="dark" onClick={() => resolve(u, true)}>Schválit</Button>
+                  <Button variant="outline" onClick={() => resolve(u, false)}>Zamítnout</Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
       <div className="flex flex-wrap gap-3 mb-4">
         <div className="flex-1 min-w-[200px] max-w-sm">
           <Input placeholder="Hledat jméno, e-mail, oddíl…" value={q} onChange={(e) => setQ(e.target.value)} />

@@ -1,9 +1,73 @@
 import { useState } from "react";
 import { api } from "../lib/api";
 import { useAuth } from "../lib/auth";
-import { ROLE_LABELS } from "../lib/format";
-import { Badge, Button, Card, Input, Label } from "../components/ui";
+import { formatDate, ROLE_LABELS } from "../lib/format";
+import { Badge, Button, Card, Input, Label, Textarea } from "../components/ui";
+import { Link } from "react-router-dom";
 import ProfileFields from "../components/ProfileFields";
+
+function OrganizerRequestCard({ user, setUser }) {
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  async function run(fn) {
+    setBusy(true);
+    setError("");
+    try {
+      setUser(await fn());
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (user.role !== "user") {
+    return (
+      <Card className="p-6 mb-6 bg-leaf/5 border-leaf/30">
+        <h2 className="font-display text-xl font-bold uppercase mb-1">Pořádání závodů</h2>
+        <p className="text-sm">
+          Můžeš zakládat a spravovat závody v <Link to="/admin" className="text-wood font-semibold hover:underline">Správě závodů</Link>.
+        </p>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="p-6 mb-6">
+      <h2 className="font-display text-xl font-bold uppercase mb-1">Pořádání závodů</h2>
+      {error && <p className="text-punch text-sm mb-2">{error}</p>}
+      {user.organizer_request_at ? (
+        <div className="space-y-3">
+          <p className="text-sm">
+            ⏳ Žádost o možnost zakládat závody jsi odeslal{" "}
+            <strong>{formatDate(user.organizer_request_at.slice(0, 10))}</strong>. Admin ji brzy vyřídí.
+          </p>
+          {user.organizer_request_note && (
+            <p className="text-sm text-forest-700/70 italic">„{user.organizer_request_note}“</p>
+          )}
+          <Button variant="outline" disabled={busy} onClick={() => run(() => api.cancelOrganizerRequest())}>
+            Zrušit žádost
+          </Button>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <p className="text-sm text-forest-700/70">
+            Chceš pořádat vlastní štafetu? Požádej admina o možnost zakládat závody.
+          </p>
+          <div>
+            <Label>Zpráva pro admina (nepovinné)</Label>
+            <Textarea rows={2} value={note} onChange={(e) => setNote(e.target.value)} placeholder="např. jakou štafetu chceš pořádat" />
+          </div>
+          <Button disabled={busy} onClick={() => run(() => api.requestOrganizer(note))}>
+            Požádat o možnost zakládat závody
+          </Button>
+        </div>
+      )}
+    </Card>
+  );
+}
 
 export default function AccountPage() {
   const { user, setUser } = useAuth();
@@ -46,6 +110,8 @@ export default function AccountPage() {
         <h1 className="font-display text-4xl font-extrabold uppercase tracking-tight">Můj účet</h1>
         <Badge tone="gold">{ROLE_LABELS[user.role]}</Badge>
       </div>
+
+      <OrganizerRequestCard user={user} setUser={setUser} />
 
       <Card className="p-6 mb-6">
         <h2 className="font-display text-xl font-bold uppercase mb-1">Profil</h2>

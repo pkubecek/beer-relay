@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
 
@@ -10,6 +12,8 @@ from ..auth import (
 )
 from ..database import get_session
 from ..models import (
+    OrganizerRequestIn,
+    UserRole,
     AuthResponse,
     PasswordChange,
     TeamMember,
@@ -89,3 +93,28 @@ def change_password(payload: PasswordChange, user: User = Depends(get_current_us
     user.password_hash = hash_password(payload.new_password)
     session.add(user)
     session.commit()
+
+
+@router.post("/me/organizer-request", response_model=UserRead)
+def request_organizer(
+    payload: OrganizerRequestIn, user: User = Depends(get_current_user), session: Session = Depends(get_session)
+):
+    """Závodník požádá admina o možnost zakládat závody."""
+    if user.role != UserRole.user:
+        raise HTTPException(status_code=400, detail="Závody už zakládat můžeš")
+    user.organizer_request_at = datetime.utcnow()
+    user.organizer_request_note = (payload.note or "").strip() or None
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+    return user
+
+
+@router.delete("/me/organizer-request", response_model=UserRead)
+def cancel_organizer_request(user: User = Depends(get_current_user), session: Session = Depends(get_session)):
+    user.organizer_request_at = None
+    user.organizer_request_note = None
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+    return user

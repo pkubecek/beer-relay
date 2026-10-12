@@ -200,3 +200,30 @@ def test_user_management(client):
     assert client.delete(f"/api/users/{u['id']}", headers=admin_h).status_code == 204
     assert client.post("/api/auth/login", json={"email": "karl@test.cz", "password": "tajneheslo"}).status_code == 401
     assert len(client.get("/api/events/manage", headers=admin_h).json()) == 1
+
+
+def test_organizer_request(client):
+    admin_h, _ = register(client, "admin@test.cz")
+    h, u = register(client, "karel@test.cz")
+    assert client.get("/api/users/requests/count", headers=admin_h).json()["count"] == 0
+    r = client.post("/api/auth/me/organizer-request", json={"note": "Pořádám štafetu na Řípu"}, headers=h)
+    assert r.status_code == 200 and r.json()["organizer_request_at"] and r.json()["organizer_request_note"]
+    assert client.get("/api/users/requests/count", headers=admin_h).json()["count"] == 1
+    assert client.get("/api/users/requests/count", headers=h).status_code == 403
+    pending = client.get("/api/users", params={"requests": True}, headers=admin_h).json()
+    assert [p["email"] for p in pending] == ["karel@test.cz"]
+    # zamítnutí
+    client.patch(f"/api/users/{u['id']}", json={"dismiss_request": True}, headers=admin_h)
+    assert client.get("/api/users/requests/count", headers=admin_h).json()["count"] == 0
+    assert client.get("/api/auth/me", headers=h).json()["role"] == "user"
+    # nová žádost a schválení
+    client.post("/api/auth/me/organizer-request", json={}, headers=h)
+    r = client.patch(f"/api/users/{u['id']}", json={"role": "organizer"}, headers=admin_h)
+    assert r.json()["role"] == "organizer" and r.json()["organizer_request_at"] is None
+    assert client.post("/api/events", json={"name": "Můj"}, headers=h).status_code == 201
+    # pořadatel už žádat nemusí
+    assert client.post("/api/auth/me/organizer-request", json={}, headers=h).status_code == 400
+    # zrušení vlastní žádosti
+    h2, _ = register(client, "jana@test.cz")
+    client.post("/api/auth/me/organizer-request", json={}, headers=h2)
+    assert client.delete("/api/auth/me/organizer-request", headers=h2).json()["organizer_request_at"] is None

@@ -52,6 +52,9 @@ class User(UserBase, table=True):
     role: UserRole = UserRole.user
     is_active: bool = True
     created_at: datetime = Field(default_factory=datetime.utcnow)
+    # žádost závodníka o právo zakládat závody (vyřizuje admin)
+    organizer_request_at: Optional[datetime] = None
+    organizer_request_note: Optional[str] = None
 
     @property
     def full_name(self) -> str:
@@ -74,6 +77,12 @@ class UserRead(UserBase):
     role: UserRole
     is_active: bool
     created_at: datetime
+    organizer_request_at: Optional[datetime] = None
+    organizer_request_note: Optional[str] = None
+
+
+class OrganizerRequestIn(SQLModel):
+    note: Optional[str] = Field(default=None, max_length=1000)
 
 
 class UserUpdate(SQLModel):
@@ -94,6 +103,7 @@ class AdminUserUpdate(SQLModel):
     role: Optional[UserRole] = None
     is_active: Optional[bool] = None
     new_password: Optional[str] = Field(default=None, min_length=8, max_length=72)
+    dismiss_request: bool = False   # zamítnout žádost o pořádání
     email: Optional[EmailStr] = None
     first_name: Optional[str] = None
     last_name: Optional[str] = None

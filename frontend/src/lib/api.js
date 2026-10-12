@@ -89,12 +89,15 @@ export const api = {
   login: (email, password) => request("/api/auth/login", { method: "POST", body: { email, password } }),
   me: () => request("/api/auth/me"),
   updateMe: (data) => request("/api/auth/me", { method: "PATCH", body: data }),
+  requestOrganizer: (note) => request("/api/auth/me/organizer-request", { method: "POST", body: { note } }),
+  cancelOrganizerRequest: () => request("/api/auth/me/organizer-request", { method: "DELETE" }),
   changePassword: (current_password, new_password) =>
     request("/api/auth/me/password", { method: "POST", body: { current_password, new_password } }),
 
   // uživatelé (admin)
   listUsers: (params = {}) => request(`/api/users${qs(params)}`),
   updateUser: (id, data) => request(`/api/users/${id}`, { method: "PATCH", body: data }),
+  pendingRequestsCount: () => request("/api/users/requests/count"),
   deleteUser: (id) => request(`/api/users/${id}`, { method: "DELETE" }),
 
   // závody

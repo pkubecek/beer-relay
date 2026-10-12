@@ -26,10 +26,17 @@ def _get_user(session: Session, user_id: int) -> User:
     return user
 
 
+@router.get("/requests/count")
+def pending_requests_count(session: Session = Depends(get_session), _: User = Depends(require_admin)):
+    n = session.exec(select(func.count(User.id)).where(User.organizer_request_at != None, User.role == UserRole.user)).one()  # noqa: E711
+    return {"count": n}
+
+
 @router.get("", response_model=List[AdminUserRead])
 def list_users(
     q: Optional[str] = None,
     role: Optional[UserRole] = None,
+    requests: bool = False,
     session: Session = Depends(get_session),
     _: User = Depends(require_admin),
 ):
@@ -39,6 +46,8 @@ def list_users(
         stmt = stmt.where(or_(User.email.ilike(like), User.first_name.ilike(like), User.last_name.ilike(like), User.club.ilike(like)))
     if role:
         stmt = stmt.where(User.role == role)
+    if requests:
+        stmt = stmt.where(User.organizer_request_at != None, User.role == UserRole.user)  # noqa: E711
     users = session.exec(stmt.order_by(User.last_name, User.first_name)).all()
     return [_to_read(session, u) for u in users]
 
@@ -59,6 +68,12 @@ def update_user(
         if user.role == UserRole.admin:
             raise HTTPException(status_code=400, detail="Admin účtu nejde měnit roli")
         user.role = data["role"]
+        if user.role == UserRole.organizer:
+            user.organizer_request_at = None  # žádost vyřízena
+            user.organizer_request_note = None
+    if data.get("dismiss_request"):
+        user.organizer_request_at = None
+        user.organizer_request_note = None
     if "is_active" in data and data["is_active"] is not None:
         if user.role == UserRole.admin or user.id == admin.id:
             raise HTTPException(status_code=400, detail="Admin účet nejde zablokovat")
