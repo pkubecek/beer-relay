@@ -2,10 +2,10 @@ import { Link } from "react-router-dom";
 
 // ⚠️ Doplňte před zveřejněním údaje o správci. Pole, která necháte prázdná (""), se na stránce nezobrazí.
 const CONTROLLER = {
-  name: "DOPLŇTE jméno a příjmení / název spolku",
+  name: "Josef Kubeček",
   ico: "", // IČ – jen pokud ho máte (spolek, živnostník)
   seat: "", // sídlo / bydliště správce
-  email: "DOPLŇTE@kontakt.cz",
+  email: "kubecekpepa@gmail.com",
   phone: "",
 };
 const EFFECTIVE_FROM = "13. 10. 2026";
