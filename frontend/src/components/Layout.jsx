@@ -91,7 +91,7 @@ export default function Layout({ children }) {
       <footer className="border-t border-wood/30 py-6 text-center text-xs text-forest-700/60 font-mono">
         © Pepko 2026
         <span className="mx-2">·</span>
-        {/*<Link to="/ochrana-udaju" className="underline hover:text-wood">Ochrana osobních údajů</Link>*/}
+        <Link to="/ochrana-udaju" className="underline hover:text-wood">Ochrana osobních údajů</Link>
       </footer>
     </div>
   );
