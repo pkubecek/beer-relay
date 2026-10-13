@@ -10,6 +10,7 @@ import MyEntriesPage from "./pages/MyEntriesPage";
 import AdminDashboardPage from "./pages/AdminDashboardPage";
 import AdminEventPage from "./pages/AdminEventPage";
 import AdminUsersPage from "./pages/AdminUsersPage";
+import PrivacyPage from "./pages/PrivacyPage";
 import { RequireAuth } from "./lib/auth";
 
 export default function App() {
@@ -21,6 +22,7 @@ export default function App() {
         <Route path="/zavody/:slug" element={<EventPage />} />
         <Route path="/prihlaseni" element={<LoginPage />} />
         <Route path="/registrace" element={<RegisterPage />} />
+        <Route path="/ochrana-udaju" element={<PrivacyPage />} />
 
         {/* přihlášený uživatel */}
         <Route path="/zavody/:slug/prihlaska" element={<RequireAuth><EntryFormPage /></RequireAuth>} />
