@@ -6,7 +6,8 @@ from sqlmodel import Session, select
 
 from ..auth import hash_password, require_admin
 from ..database import get_session
-from ..models import AdminUserRead, AdminUserUpdate, Event, Team, TeamMember, User, UserRole
+from ..models import AdminUserRead, AdminUserUpdate, Event, Team, User, UserRole
+from ..services import delete_account
 
 router = APIRouter(prefix="/api/users", tags=["users"])
 
@@ -100,18 +101,8 @@ def update_user(
 
 @router.delete("/{user_id}", status_code=204)
 def delete_user(user_id: int, session: Session = Depends(get_session), admin: User = Depends(require_admin)):
-    """Smaže účet. Jeho týmy a závody zůstanou (jen bez vazby na účet)."""
+    """Smaže účet (stejně jako když si ho smaže uživatel sám)."""
     user = _get_user(session, user_id)
     if user.role == UserRole.admin or user.id == admin.id:
         raise HTTPException(status_code=400, detail="Admin účet nejde smazat")
-    for ev in session.exec(select(Event).where(Event.organizer_id == user.id)).all():
-        ev.organizer_id = None
-        session.add(ev)
-    for t in session.exec(select(Team).where(Team.captain_id == user.id)).all():
-        t.captain_id = None
-        session.add(t)
-    for m in session.exec(select(TeamMember).where(TeamMember.user_id == user.id)).all():
-        m.user_id = None
-        session.add(m)
-    session.delete(user)
-    session.commit()
+    delete_account(session, user)

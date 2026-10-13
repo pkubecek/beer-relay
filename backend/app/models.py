@@ -98,6 +98,10 @@ class PasswordChange(SQLModel):
     new_password: str = Field(min_length=8, max_length=72)
 
 
+class AccountDelete(SQLModel):
+    password: str
+
+
 class AdminUserUpdate(SQLModel):
     """Úprava účtu adminem. Roli lze nastavit jen na závodník / pořadatel – admin se přiděluje přes ADMIN_EMAILS."""
     role: Optional[UserRole] = None

@@ -3,7 +3,7 @@ import { api } from "../lib/api";
 import { useAuth } from "../lib/auth";
 import { formatDate, ROLE_LABELS } from "../lib/format";
 import { Badge, Button, Card, Input, Label, Textarea } from "../components/ui";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import ProfileFields from "../components/ProfileFields";
 
 function OrganizerRequestCard({ user, setUser }) {
@@ -64,6 +64,60 @@ function OrganizerRequestCard({ user, setUser }) {
             Požádat o možnost zakládat závody
           </Button>
         </div>
+      )}
+    </Card>
+  );
+}
+
+function DeleteAccountCard() {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  async function submit(e) {
+    e.preventDefault();
+    setBusy(true);
+    setError("");
+    try {
+      await api.deleteMe(password);
+      logout();
+      navigate("/", { replace: true });
+    } catch (e2) {
+      setError(e2.message);
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Card className="p-6 mt-6 border-punch/30">
+      <h2 className="font-display text-xl font-bold uppercase mb-1 text-punch">Smazání účtu</h2>
+      {!open ? (
+        <div className="space-y-3">
+          <p className="text-sm text-forest-700/70">Účet a údaje z profilu nenávratně smažeš.</p>
+          <Button variant="outline" onClick={() => setOpen(true)}>Smazat účet…</Button>
+        </div>
+      ) : (
+        <form onSubmit={submit} className="space-y-3">
+          <ul className="text-sm list-disc pl-5 space-y-1">
+            <li>smaže se e-mail, jméno, telefon a další údaje profilu,</li>
+            <li>tvoje přihlášky na nadcházející závody (kde jsi kapitán) se zruší,</li>
+            <li>výsledky proběhlých závodů zůstanou, jen bez vazby na tvůj účet,</li>
+            <li>tento krok nejde vrátit.</li>
+          </ul>
+          {error && <p className="text-punch text-sm">{error}</p>}
+          <div className="max-w-xs">
+            <Label>Pro potvrzení zadej heslo</Label>
+            <Input type="password" required autoComplete="current-password" value={password}
+              onChange={(e) => setPassword(e.target.value)} />
+          </div>
+          <div className="flex gap-3">
+            <Button type="submit" variant="danger" disabled={busy}>Nenávratně smazat účet</Button>
+            <Button type="button" variant="outline" onClick={() => { setOpen(false); setPassword(""); setError(""); }}>Zpět</Button>
+          </div>
+        </form>
       )}
     </Card>
   );
@@ -148,6 +202,8 @@ export default function AccountPage() {
           </div>
         </form>
       </Card>
+
+      {user.role !== "admin" && <DeleteAccountCard />}
     </div>
   );
 }

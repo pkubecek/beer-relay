@@ -90,6 +90,7 @@ export const api = {
   me: () => request("/api/auth/me"),
   updateMe: (data) => request("/api/auth/me", { method: "PATCH", body: data }),
   requestOrganizer: (note) => request("/api/auth/me/organizer-request", { method: "POST", body: { note } }),
+  deleteMe: (password) => request("/api/auth/me", { method: "DELETE", body: { password } }),
   cancelOrganizerRequest: () => request("/api/auth/me/organizer-request", { method: "DELETE" }),
   changePassword: (current_password, new_password) =>
     request("/api/auth/me/password", { method: "POST", body: { current_password, new_password } }),

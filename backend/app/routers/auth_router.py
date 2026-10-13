@@ -11,7 +11,9 @@ from ..auth import (
     verify_password,
 )
 from ..database import get_session
+from ..services import delete_account
 from ..models import (
+    AccountDelete,
     OrganizerRequestIn,
     UserRole,
     AuthResponse,
@@ -118,3 +120,13 @@ def cancel_organizer_request(user: User = Depends(get_current_user), session: Se
     session.commit()
     session.refresh(user)
     return user
+
+
+@router.delete("/me", status_code=204)
+def delete_me(payload: AccountDelete, user: User = Depends(get_current_user), session: Session = Depends(get_session)):
+    """Uživatel si smaže vlastní účet (potvrzuje heslem)."""
+    if user.role == UserRole.admin:
+        raise HTTPException(status_code=400, detail="Admin účet nejde smazat")
+    if not verify_password(payload.password, user.password_hash):
+        raise HTTPException(status_code=400, detail="Heslo nesedí")
+    delete_account(session, user)

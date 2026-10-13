@@ -227,3 +227,30 @@ def test_organizer_request(client):
     h2, _ = register(client, "jana@test.cz")
     client.post("/api/auth/me/organizer-request", json={}, headers=h2)
     assert client.delete("/api/auth/me/organizer-request", headers=h2).json()["organizer_request_at"] is None
+
+
+def test_self_delete_account(client):
+    admin_h, org_h = make_organizer(client)
+    future = make_event(client, org_h)
+    past = make_event(client, org_h, name="Loňská štafeta", event_date="2020-05-01")
+    legs = client.get(f"/api/events/{future['id']}/legs").json()
+    h, me = register(client, "smaz@test.cz", "Sára", "Mazaná")
+    r = client.post(f"/api/events/{future['id']}/entries", json={"name": "Budoucí", "members": [{"leg_id": legs[0]["id"], "name": "Sára", "email": "smaz@test.cz"}]}, headers=h)
+    assert r.status_code == 201, r.text
+    # přihláška na proběhlý závod s výsledkem (vložená rovnou do DB)
+    from app.models import Team
+    from app.database import get_session
+    sess = next(get_session())
+    sess.add(Team(event_id=past["id"], name="Loni", captain_id=me["id"], contact_name="Sára", contact_email="smaz@test.cz", place=1))
+    sess.commit()
+
+    assert client.request("DELETE", "/api/auth/me", json={"password": "spatne"}, headers=h).status_code == 400
+    assert client.request("DELETE", "/api/auth/me", json={"password": "tajneheslo"}, headers=h).status_code == 204
+    assert client.post("/api/auth/login", json={"email": "smaz@test.cz", "password": "tajneheslo"}).status_code == 401
+    # budoucí přihláška zrušena, minulý výsledek zůstal bez kontaktu
+    assert client.get(f"/api/events/{future['id']}/entries").json() == []
+    sess.expire_all()
+    loni = sess.query(Team).filter(Team.name == "Loni").one()
+    assert loni.captain_id is None and loni.contact_email == "" and loni.place == 1
+    # admin se smazat nemůže
+    assert client.request("DELETE", "/api/auth/me", json={"password": "tajneheslo"}, headers=admin_h).status_code == 400

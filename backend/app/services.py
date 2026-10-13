@@ -125,3 +125,33 @@ def category_belongs(session: Session, category_id: Optional[int], event_id: int
 def team_member_user_ids(session: Session, team_id: int) -> set:
     rows = session.exec(select(TeamMember.user_id).where(TeamMember.team_id == team_id)).all()
     return {r for r in rows if r is not None}
+
+
+def delete_account(session: Session, user: User) -> None:
+    """Smaže účet a osobní údaje profilu.
+
+    - přihlášky na nadcházející závody (bez výsledku), kde je uživatel kapitánem, se zruší,
+    - přihlášky a výsledky proběhlých závodů zůstanou, jen bez vazby na účet a bez kontaktů,
+    - závody, které uživatel pořádal, zůstanou (spravuje je dál admin).
+    """
+    today = datetime.now(LOCAL_TZ).date()
+    for t in session.exec(select(Team).where(Team.captain_id == user.id)).all():
+        ev = session.get(Event, t.event_id)
+        upcoming = ev is None or ev.event_date is None or ev.event_date >= today
+        if upcoming and t.place is None and not t.dnf:
+            session.delete(t)
+            continue
+        t.captain_id = None
+        t.contact_email = ""
+        t.contact_phone = None
+        session.add(t)
+    for m in session.exec(select(TeamMember).where(TeamMember.user_id == user.id)).all():
+        m.user_id = None
+        m.email = None
+        session.add(m)
+    for ev in session.exec(select(Event).where(Event.organizer_id == user.id)).all():
+        ev.organizer_id = None
+        session.add(ev)
+    session.flush()
+    session.delete(user)
+    session.commit()

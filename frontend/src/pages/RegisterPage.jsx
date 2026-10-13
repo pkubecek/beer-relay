@@ -58,6 +58,10 @@ export default function RegisterPage() {
             </div>
           </div>
           <ProfileFields form={form} update={update} />
+          <p className="text-xs text-forest-700/60">
+            Vytvořením účtu berete na vědomí{" "}
+            <Link to="/ochrana-udaju" target="_blank" className="text-wood underline">zásady ochrany osobních údajů</Link>.
+          </p>
           <Button type="submit" className="w-full" disabled={submitting}>
             {submitting ? "Zakládám účet…" : "Vytvořit účet"}
           </Button>
