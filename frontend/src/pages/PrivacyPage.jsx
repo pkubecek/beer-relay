@@ -5,7 +5,7 @@ const CONTROLLER = {
   name: "Josef Kubeček",
   ico: "", // IČ – jen pokud ho máte (spolek, živnostník)
   seat: "", // sídlo / bydliště správce
-  email: "kubecekpepa@gmail.com",
+  email: "kubecekpepa8@gmail.com",
   phone: "",
 };
 const EFFECTIVE_FROM = "13. 10. 2026";
