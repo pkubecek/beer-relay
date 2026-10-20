@@ -254,3 +254,13 @@ def test_self_delete_account(client):
     assert loni.captain_id is None and loni.contact_email == "" and loni.place == 1
     # admin se smazat nemůže
     assert client.request("DELETE", "/api/auth/me", json={"password": "tajneheslo"}, headers=admin_h).status_code == 400
+
+
+def test_leg_name_optional(client):
+    _, org_h = make_organizer(client)
+    ev = make_event(client, org_h)
+    r = client.post(f"/api/events/{ev['id']}/legs", json={"order": 4}, headers=org_h)
+    assert r.status_code == 201, r.text
+    assert r.json()["name"] == ""
+    r = client.patch(f"/api/events/legs/{r.json()['id']}", json={"order": 4, "name": "  "}, headers=org_h)
+    assert r.status_code == 200 and r.json()["name"] == ""

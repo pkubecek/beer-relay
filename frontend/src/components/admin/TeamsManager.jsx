@@ -42,7 +42,7 @@ export default function TeamsManager({ event, teams, legs, categories, onChange 
     }
   }
 
-  const legName = Object.fromEntries(legs.map((l) => [l.id, `${l.order}. ${l.name}`]));
+  const legName = Object.fromEntries(legs.map((l) => [l.id, `${l.order}. ${l.name || "úsek"}`]));
   const active = teams.filter((t) => t.status !== "rejected");
   const shown = filter === "all" ? teams : filter === "unpaid" ? active.filter((t) => !t.paid) : teams.filter((t) => t.status === filter);
   const paidCount = active.filter((t) => t.paid).length;

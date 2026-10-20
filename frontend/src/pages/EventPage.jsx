@@ -3,7 +3,7 @@ import { Link, useLocation, useParams } from "react-router-dom";
 import { api } from "../lib/api";
 import { useAuth } from "../lib/auth";
 import { Badge, Button, Card } from "../components/ui";
-import { EVENT_STATUS_TONE, formatDate, formatDateTime, formatMoney, STATUS_LABELS } from "../lib/format";
+import { EVENT_STATUS_TONE, formatDate, formatDateTime, formatMoney, STATUS_LABELS, legLabel } from "../lib/format";
 import EntriesList from "../components/EntriesList";
 import ResultsTable from "../components/ResultsTable";
 import RouteLine from "../components/RouteLine";
@@ -159,7 +159,7 @@ export default function EventPage() {
                 legs={legs}
                 renderLeg={(leg) => (
                   <div>
-                    <p className="font-semibold text-sm">{leg.name}</p>
+                    <p className="font-semibold text-sm">{legLabel(leg)}</p>
                     {leg.description && <p className="text-xs text-forest-700/60">{leg.description}</p>}
                   </div>
                 )}

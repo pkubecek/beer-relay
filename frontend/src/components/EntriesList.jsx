@@ -11,7 +11,7 @@ function EntriesTable({ teams, legs }) {
             <th className="py-2 pr-2">Tým</th>
             {legs.map((leg) => (
               <th key={leg.id} className="py-2 px-2 hidden md:table-cell">
-                <span className="font-mono">{leg.order}.</span> {leg.name}
+                <span className="font-mono">{leg.order}.</span> {leg.name || "úsek"}
               </th>
             ))}
           </tr>

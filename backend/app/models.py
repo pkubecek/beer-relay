@@ -2,7 +2,7 @@ from datetime import datetime, date
 from enum import Enum
 from typing import Optional, List
 
-from pydantic import EmailStr
+from pydantic import EmailStr, field_validator
 from sqlmodel import SQLModel, Field, Relationship
 from sqlalchemy import UniqueConstraint
 
@@ -205,7 +205,7 @@ class EventRead(EventBase):
 
 class LegBase(SQLModel):
     order: int
-    name: str
+    name: str = ""  # nepovinné – prázdný název se zobrazí jako „1. úsek“
     description: Optional[str] = None
 
 
@@ -220,7 +220,10 @@ class Leg(LegBase, table=True):
 
 
 class LegCreate(LegBase):
-    pass
+    @field_validator("name", mode="before")
+    @classmethod
+    def _blank_name(cls, v):
+        return (v or "").strip()
 
 
 class LegRead(LegBase):

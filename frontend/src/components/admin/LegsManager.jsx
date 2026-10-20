@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { api } from "../../lib/api";
 import { Button, Card, Input, Label } from "../ui";
+import { legLabel } from "../../lib/format";
 
 export default function LegsManager({ eventId, legs, onChange }) {
   const [form, setForm] = useState({ order: legs.length + 1, name: "", description: "" });
@@ -36,7 +37,7 @@ export default function LegsManager({ eventId, legs, onChange }) {
             <div className="flex items-center gap-3">
               <span className="leg-marker !w-7 !h-7 !text-xs">{leg.order}</span>
               <div>
-                <p className="font-semibold text-sm">{leg.name}</p>
+                <p className={`font-semibold text-sm ${leg.name ? "" : "text-forest-700/50 italic"}`}>{legLabel(leg)}</p>
                 {leg.description && <p className="text-xs text-forest-700/60">{leg.description}</p>}
               </div>
             </div>
@@ -64,9 +65,8 @@ export default function LegsManager({ eventId, legs, onChange }) {
           />
         </div>
         <div className="flex-1 min-w-[160px]">
-          <Label>Název úseku</Label>
+          <Label>Název úseku (volitelně)</Label>
           <Input
-            required
             value={form.name}
             onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
             placeholder="např. Lesní okruh"

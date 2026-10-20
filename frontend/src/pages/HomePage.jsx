@@ -43,7 +43,7 @@ export default function HomePage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="font-display text-4xl md:text-5xl font-extrabold uppercase tracking-tight text-forest-900">Kalendář štafet</h1>
+        <h1 className="font-display text-4xl md:text-5xl font-extrabold uppercase tracking-tight text-forest-900">Kalendář</h1>
       </div>
 
       <div className="flex flex-wrap items-center gap-3 mb-6">

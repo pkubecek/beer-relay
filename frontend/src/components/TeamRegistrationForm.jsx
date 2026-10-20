@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button, Input, Label, Select, Textarea } from "./ui";
+import { legLabel } from "../lib/format";
 
 /**
  * Formulář přihlášky týmu – členové po úsecích.
@@ -51,10 +52,10 @@ export default function TeamRegistrationForm({ legs, categories, initial, user, 
       <div className="grid sm:grid-cols-2 gap-4">
         <div>
           <Label>Název týmu</Label>
-          <Input required maxLength={80} value={form.name} onChange={(e) => update("name", e.target.value)} placeholder="Lesní vlci" />
+          <Input required maxLength={80} value={form.name} onChange={(e) => update("name", e.target.value)} placeholder="Pivenkáři" />
         </div>
         <div>
-          <Label>Oddíl / parta (volitelně)</Label>
+          <Label>Oddíl (volitelné)</Label>
           <Input value={form.club} onChange={(e) => update("club", e.target.value)} />
         </div>
       </div>
@@ -75,7 +76,7 @@ export default function TeamRegistrationForm({ legs, categories, initial, user, 
           </div>
         )}
         <div>
-          <Label>Telefon na kapitána</Label>
+          <Label>Telefon</Label>
           <Input type="tel" value={form.contact_phone} onChange={(e) => update("contact_phone", e.target.value)} placeholder="+420…" />
         </div>
       </div>
@@ -90,7 +91,7 @@ export default function TeamRegistrationForm({ legs, categories, initial, user, 
               <div key={leg.id} className="flex flex-col sm:flex-row sm:items-center gap-2 bg-forest-50 rounded-md p-2">
                 <div className="flex items-center gap-2 sm:w-44 shrink-0">
                   <span className="leg-marker !w-7 !h-7 !text-xs">{leg.order}</span>
-                  <span className="text-sm font-semibold truncate">{leg.name}</span>
+                  <span className="text-sm font-semibold truncate">{legLabel(leg)}</span>
                 </div>
                 <Input placeholder="Jméno závodníka" value={form.members[i].name} onChange={(e) => updateMember(i, { name: e.target.value })} />
                 <Input

@@ -58,6 +58,11 @@ export function formatMoney(value) {
   return `${value.toLocaleString("cs-CZ")} Kč`;
 }
 
+/** Název úseku – když ho pořadatel nevyplnil, použije se „1. úsek“. */
+export function legLabel(leg) {
+  return leg?.name?.trim() || `${leg?.order}. úsek`;
+}
+
 export const ROLE_LABELS = {
   user: "Závodník",
   organizer: "Závodník + pořadatel",
