@@ -42,7 +42,7 @@ export default function AdminDashboardPage() {
         <Card className="p-5 mb-6">
           <form onSubmit={handleCreate} className="grid sm:grid-cols-2 gap-4">
             <div className="sm:col-span-2">
-              <Label>Název závodu</Label>
+              <Label required>Název závodu</Label>
               <Input required value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
             </div>
             <div>

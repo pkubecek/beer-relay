@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Optional, Tuple
 from zoneinfo import ZoneInfo
 
+from fastapi import HTTPException
 from sqlalchemy import func
 from sqlmodel import Session, select
 
@@ -52,6 +53,40 @@ def registration_state(event: Event, session: Session) -> Tuple[bool, Optional[s
     if event.max_teams is not None and active_team_count(session, event.id) >= event.max_teams:
         return False, "Kapacita závodu je naplněná."
     return True, None
+
+
+PUBLISH_REQUIRED = {"location": "místo", "event_date": "datum", "start_time": "čas startu"}
+
+
+def check_publishable(event: Event) -> None:
+    """Zveřejněný závod (jiný stav než koncept) musí mít místo, datum a čas startu."""
+    if event.status == EventStatus.draft:
+        return
+    missing = [label for field, label in PUBLISH_REQUIRED.items() if not str(getattr(event, field) or "").strip()]
+    if not (event.name or "").strip():
+        missing.insert(0, "název")
+    if missing:
+        raise HTTPException(status_code=422, detail="Pro zveřejnění závodu vyplň: " + ", ".join(missing))
+
+
+def close_if_expired(event: Event) -> bool:
+    """Po uzávěrce přepne „Přihlášky otevřeny“ na „Přihlášky uzavřeny“. Vrací True, pokud se stav změnil."""
+    if event.status == EventStatus.open and event.entry_deadline and local_now() > event.entry_deadline:
+        event.status = EventStatus.closed
+        return True
+    return False
+
+
+def auto_close_expired(session: Session) -> None:
+    """Uzavře přihlášky všem otevřeným závodům, kterým už proběhla uzávěrka."""
+    expired = session.exec(
+        select(Event).where(Event.status == EventStatus.open, Event.entry_deadline != None, Event.entry_deadline < local_now())  # noqa: E711
+    ).all()
+    for ev in expired:
+        ev.status = EventStatus.closed
+        session.add(ev)
+    if expired:
+        session.commit()
 
 
 def event_to_read(event: Event, session: Session, user: Optional[User] = None) -> EventRead:

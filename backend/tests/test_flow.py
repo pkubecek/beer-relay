@@ -12,7 +12,8 @@ def make_organizer(client):
 
 
 def make_event(client, org_h, **extra):
-    body = {"name": "Pivní štafeta Říp 2026", "event_date": "2030-05-01", "status": "open", "entry_fee": 400, **extra}
+    body = {"name": "Pivní štafeta Říp 2026", "event_date": "2030-05-01", "start_time": "10:00", "location": "Říp",
+            "status": "open", "entry_fee": 400, **extra}
     r = client.post("/api/events", json=body, headers=org_h)
     assert r.status_code == 201, r.text
     ev = r.json()
@@ -264,3 +265,29 @@ def test_leg_name_optional(client):
     assert r.json()["name"] == ""
     r = client.patch(f"/api/events/legs/{r.json()['id']}", json={"order": 4, "name": "  "}, headers=org_h)
     assert r.status_code == 200 and r.json()["name"] == ""
+
+
+def test_publish_requirements_and_auto_close(client):
+    _, org_h = make_organizer(client)
+    # koncept jde založit jen s názvem, zveřejnit ale ne
+    r = client.post("/api/events", json={"name": "Koncept"}, headers=org_h)
+    assert r.status_code == 201
+    ev = r.json()
+    r = client.patch(f"/api/events/{ev['id']}", json={"status": "open"}, headers=org_h)
+    assert r.status_code == 422 and "místo" in r.json()["detail"] and "čas startu" in r.json()["detail"]
+    assert client.post("/api/events", json={"name": "X", "status": "open", "location": "Říp"}, headers=org_h).status_code == 422
+    r = client.patch(f"/api/events/{ev['id']}", json={"status": "open", "location": "Říp", "event_date": "2030-01-01", "start_time": "10:00"}, headers=org_h)
+    assert r.status_code == 200 and r.json()["status"] == "open"
+    # po uzávěrce se přihlášky samy uzavřou
+    past = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%dT%H:%M")
+    r = client.patch(f"/api/events/{ev['id']}", json={"entry_deadline": past}, headers=org_h)
+    assert r.json()["status"] == "closed"
+    # a i když stav zůstal v DB otevřený (uzávěrka proběhla mezitím), kalendář ho uzavře
+    from app.database import get_session
+    from app.models import Event
+    sess = next(get_session())
+    e = sess.get(Event, ev["id"])
+    e.status = "open"
+    sess.add(e)
+    sess.commit()
+    assert client.get("/api/events").json()[0]["status"] == "closed"

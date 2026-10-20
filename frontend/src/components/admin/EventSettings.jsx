@@ -38,8 +38,19 @@ export default function EventSettings({ event, onSaved }) {
     setMapLabel(label || "");
   }
 
+  const missing = [
+    !form.name?.trim() && "název",
+    !form.location?.trim() && "místo",
+    !form.event_date && "datum",
+    !form.start_time && "čas startu",
+  ].filter(Boolean);
+
   async function handleSubmit(e) {
     e.preventDefault();
+    if (form.status !== "draft" && missing.length) {
+      setError(`Pro zveřejnění závodu vyplň: ${missing.join(", ")}. Nebo nech stav „${STATUS_LABELS.draft}“.`);
+      return;
+    }
     setSaving(true);
     setMsg("");
     setError("");
@@ -80,31 +91,36 @@ export default function EventSettings({ event, onSaved }) {
         <h3 className="font-display text-lg font-bold uppercase">Základní údaje</h3>
         <div className="grid sm:grid-cols-2 gap-4">
           <div className="sm:col-span-2">
-            <Label>Název</Label>
+            <Label required>Název</Label>
             <Input required value={form.name} onChange={(e) => update("name", e.target.value)} />
           </div>
           <div>
             <Label>Adresa (slug)</Label>
             <Input value={form.slug} onChange={(e) => update("slug", e.target.value)} />
           </div>
-          <div>
-            <Label>Stav</Label>
+          <div className="rounded-md bg-punch/10 ring-1 ring-punch/30 p-2 -m-2">
+            <Label required>Stav</Label>
             <Select value={form.status} onChange={(e) => update("status", e.target.value)}>
               {Object.entries(STATUS_LABELS).map(([k, v]) => (
                 <option key={k} value={k}>{v}</option>
               ))}
             </Select>
+            <p className="text-[11px] text-forest-700/70 mt-1 leading-snug">
+              {form.status === "draft"
+                ? "Koncept vidíš jen ty. Pro zveřejnění vyplň všechny údaje s *."
+                : "Po uzávěrce se stav sám přepne na „Přihlášky uzavřeny“."}
+            </p>
           </div>
           <div>
-            <Label>Datum</Label>
+            <Label required>Datum</Label>
             <Input type="date" value={form.event_date} onChange={(e) => update("event_date", e.target.value)} />
           </div>
           <div>
-            <Label>Čas startu</Label>
+            <Label required>Čas startu</Label>
             <Input type="time" value={form.start_time} onChange={(e) => update("start_time", e.target.value)} />
           </div>
           <div className="sm:col-span-2 space-y-2">
-            <Label>Místo</Label>
+            <Label required>Místo</Label>
             <Input value={form.location} onChange={(e) => update("location", e.target.value)} placeholder="např. Hospoda U Lípy, Říp" />
             {mapLabel && mapLabel !== form.location && (
               <button type="button" className="text-xs text-wood hover:underline" onClick={() => update("location", mapLabel)}>
@@ -157,9 +173,11 @@ export default function EventSettings({ event, onSaved }) {
         </div>
       </Card>
 
+      <p className="text-xs text-forest-700/60"><span className="text-punch">*</span> povinné pro zveřejnění závodu</p>
       <div className="flex items-center gap-3 flex-wrap">
         <Button type="submit" disabled={saving}>{saving ? "Ukládám…" : "Uložit nastavení"}</Button>
         {msg && <span className="text-leaf text-sm">{msg}</span>}
+        {error && <span className="text-punch text-sm">{error}</span>}
         <div className="flex-1" />
         <Button type="button" variant="danger" onClick={handleDelete}>Smazat závod</Button>
       </div>

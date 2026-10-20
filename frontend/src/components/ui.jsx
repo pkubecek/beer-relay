@@ -61,6 +61,11 @@ export function Select(props) {
   );
 }
 
-export function Label({ children }) {
-  return <label className="block text-xs font-semibold uppercase tracking-wide text-wood mb-1">{children}</label>;
+export function Label({ children, required = false }) {
+  return (
+    <label className="block text-xs font-semibold uppercase tracking-wide text-wood mb-1">
+      {children}
+      {required && <span className="text-punch ml-0.5" aria-hidden="true">*</span>}
+    </label>
+  );
 }

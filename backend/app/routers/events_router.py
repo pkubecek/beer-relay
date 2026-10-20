@@ -32,7 +32,7 @@ from ..models import (
     User,
     UserRole,
 )
-from ..services import active_team_count, event_to_read, local_now
+from ..services import active_team_count, auto_close_expired, check_publishable, close_if_expired, event_to_read, local_now
 
 router = APIRouter(prefix="/api/events", tags=["events"])
 
@@ -65,6 +65,7 @@ def list_events(
     session: Session = Depends(get_session),
     user: Optional[User] = Depends(get_optional_user),
 ):
+    auto_close_expired(session)
     stmt = select(Event).where(Event.status != EventStatus.draft)
     today = local_now().date()
     if when == "upcoming":
@@ -83,6 +84,7 @@ def list_events(
 
 @router.get("/manage", response_model=List[EventRead])
 def list_managed_events(session: Session = Depends(get_session), user: User = Depends(require_organizer)):
+    auto_close_expired(session)
     stmt = select(Event)
     if user.role != UserRole.admin:
         stmt = stmt.where(Event.organizer_id == user.id)
@@ -95,6 +97,10 @@ def get_event(slug: str, session: Session = Depends(get_session), user: Optional
     event = session.exec(select(Event).where(Event.slug == slug)).first()
     if not event or (event.status == EventStatus.draft and not can_manage_event(user, event)):
         raise HTTPException(status_code=404, detail="Závod nenalezen")
+    if close_if_expired(event):
+        session.add(event)
+        session.commit()
+        session.refresh(event)
     return event_to_read(event, session, user)
 
 
@@ -107,6 +113,8 @@ def create_event(payload: EventCreate, session: Session = Depends(get_session), 
     data = payload.model_dump()
     data["slug"] = _unique_slug(session, data.get("slug") or payload.name)
     event = Event(**data, organizer_id=user.id)
+    check_publishable(event)
+    close_if_expired(event)
     session.add(event)
     session.commit()
     session.refresh(event)
@@ -136,6 +144,12 @@ def update_event(
         raise HTTPException(status_code=422, detail="Název závodu nesmí být prázdný")
     for k, v in updates.items():
         setattr(event, k, v)
+    try:
+        check_publishable(event)
+    except HTTPException:
+        session.rollback()
+        raise
+    close_if_expired(event)
     session.add(event)
     session.commit()
     session.refresh(event)
