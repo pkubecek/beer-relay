@@ -2,6 +2,9 @@ import { useState } from "react";
 import { Button, Input, Label, Select, Textarea } from "./ui";
 import { legLabel } from "../lib/format";
 
+const CODE_RE = /^\d{6}$/;
+const isCode = (v) => CODE_RE.test((v || "").replace(/\s/g, ""));
+
 /**
  * Formulář přihlášky týmu – členové po úsecích.
  * `initial` = existující přihláška (úprava) nebo null (nová).
@@ -18,7 +21,9 @@ export default function TeamRegistrationForm({ legs, categories, initial, user, 
       members: legs.map((leg, i) => ({
         leg_id: leg.id,
         name: byLeg[leg.id]?.name ?? (!initial && i === 0 && user ? `${user.first_name} ${user.last_name}` : ""),
-        email: byLeg[leg.id]?.email ?? (!initial && i === 0 && user ? user.email : ""),
+        // jedno pole: e-mail nebo 6místný kód závodníka
+        link: byLeg[leg.id]?.email || byLeg[leg.id]?.racer_code || (!initial && i === 0 && user ? user.racer_code || user.email : ""),
+        linked: !!byLeg[leg.id]?.user_id,
       })),
     };
   });
@@ -37,7 +42,14 @@ export default function TeamRegistrationForm({ legs, categories, initial, user, 
       await onSubmit({
         ...form,
         category_id: form.category_id === "" ? null : Number(form.category_id),
-        members: form.members.filter((m) => m.name.trim()).map((m) => ({ ...m, email: m.email?.trim() || null })),
+        members: form.members
+          .filter((m) => m.name.trim() || isCode(m.link))
+          .map(({ leg_id, name, link }) => {
+            const value = (link || "").trim();
+            return isCode(value)
+              ? { leg_id, name, racer_code: value.replace(/\s/g, ""), email: null }
+              : { leg_id, name, email: value || null, racer_code: null };
+          }),
       });
     } catch (err) {
       setError(err.message);
@@ -93,18 +105,28 @@ export default function TeamRegistrationForm({ legs, categories, initial, user, 
                   <span className="leg-marker !w-7 !h-7 !text-xs">{leg.order}</span>
                   <span className="text-sm font-semibold truncate">{legLabel(leg)}</span>
                 </div>
-                <Input placeholder="Jméno závodníka" value={form.members[i].name} onChange={(e) => updateMember(i, { name: e.target.value })} />
                 <Input
-                  type="email"
-                  placeholder="E-mail (nepovinné)"
-                  title="Když má závodník účet s tímto e-mailem, uvidí přihlášku v Mých přihláškách"
-                  value={form.members[i].email || ""}
-                  onChange={(e) => updateMember(i, { email: e.target.value })}
+                  placeholder={isCode(form.members[i].link) ? "Jméno se doplní z účtu" : "Jméno závodníka"}
+                  value={form.members[i].name}
+                  onChange={(e) => updateMember(i, { name: e.target.value })}
                 />
+                <div className="relative w-full">
+                  <Input
+                    placeholder="Kód závodníka nebo e-mail"
+                    title="6místný kód najde závodník ve svém profilu (Můj účet). Díky němu se mu přihláška i výsledky připíšou do účtu a rankingu."
+                    value={form.members[i].link || ""}
+                    onChange={(e) => updateMember(i, { link: e.target.value, linked: false })}
+                    className={form.members[i].linked ? "pr-8" : ""}
+                  />
+                  {form.members[i].linked && (
+                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-leaf text-sm" title="Propojeno s účtem závodníka">✓</span>
+                  )}
+                </div>
               </div>
             ))}
             <p className="text-xs text-forest-700/50">
-              E-mail je neveřejný – slouží jen k propojení s účtem závodníka. Sestavu můžeš měnit až do uzávěrky.
+              Zadej <strong>kód závodníka</strong> (najde ho ve svém profilu) nebo e-mail jeho účtu – jen tak se mu výsledky
+              započítají do rankingu. Kód ani e-mail nejsou veřejné. Sestavu můžeš měnit až do uzávěrky.
             </p>
           </div>
         )}

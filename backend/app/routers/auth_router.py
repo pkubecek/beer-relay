@@ -11,7 +11,7 @@ from ..auth import (
     verify_password,
 )
 from ..database import get_session
-from ..services import delete_account
+from ..services import delete_account, new_racer_code
 from ..models import (
     AccountDelete,
     OrganizerRequestIn,
@@ -42,7 +42,7 @@ def register(payload: UserRegister, session: Session = Depends(get_session)):
         raise HTTPException(status_code=422, detail="Vyplň jméno i příjmení")
 
     data = payload.model_dump(exclude={"email", "password"})
-    user = User(**data, email=email, password_hash=hash_password(payload.password))
+    user = User(**data, email=email, password_hash=hash_password(payload.password), racer_code=new_racer_code(session))
     apply_bootstrap_admin(user)
     session.add(user)
     session.commit()

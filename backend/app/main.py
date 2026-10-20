@@ -9,6 +9,7 @@ from .auth import ADMIN_EMAILS, apply_bootstrap_admin
 from . import database
 from .database import init_db
 from .models import User
+from .services import ensure_racer_codes
 from .routers import auth_router, events_router, ranking_router, results_router, teams_router, users_router
 
 
@@ -26,6 +27,8 @@ def _promote_bootstrap_admins() -> None:
 async def lifespan(app: FastAPI):
     init_db()
     _promote_bootstrap_admins()
+    with Session(database.engine) as session:
+        ensure_racer_codes(session)
     yield
 
 

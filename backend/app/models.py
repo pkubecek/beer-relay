@@ -56,6 +56,7 @@ class User(UserBase, table=True):
     organizer_request_at: Optional[datetime] = None
     organizer_request_note: Optional[str] = None
     hide_from_ranking: bool = False  # závodník se nechce zobrazovat v rankingu
+    racer_code: Optional[str] = Field(default=None, index=True)  # 6místný kód pro zapsání do sestavy
 
     @property
     def full_name(self) -> str:
@@ -81,6 +82,7 @@ class UserRead(UserBase):
     organizer_request_at: Optional[datetime] = None
     organizer_request_note: Optional[str] = None
     hide_from_ranking: bool = False
+    racer_code: Optional[str] = None
 
 
 class OrganizerRequestIn(SQLModel):
@@ -305,6 +307,7 @@ class TeamMember(SQLModel, table=True):
     leg_id: Optional[int] = Field(default=None, foreign_key="leg.id")
     name: str
     email: Optional[str] = None                     # neveřejné, slouží k propojení s účtem
+    racer_code: Optional[str] = None                # kód závodníka zadaný kapitánem (alternativa k e-mailu)
     user_id: Optional[int] = Field(default=None, foreign_key="user.id", index=True)
 
     team: Optional[Team] = Relationship(back_populates="member_rows")
@@ -312,8 +315,9 @@ class TeamMember(SQLModel, table=True):
 
 class TeamMemberIn(SQLModel):
     leg_id: Optional[int] = None
-    name: str
+    name: str = ""          # může zůstat prázdné, když je zadaný kód závodníka – doplní se z účtu
     email: Optional[str] = None
+    racer_code: Optional[str] = None
 
 
 class TeamMemberPublic(SQLModel):
@@ -324,6 +328,7 @@ class TeamMemberPublic(SQLModel):
 class TeamMemberRead(TeamMemberPublic):
     id: int
     email: Optional[str] = None
+    racer_code: Optional[str] = None
     user_id: Optional[int] = None
 
 

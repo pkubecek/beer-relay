@@ -33,6 +33,7 @@ from ..services import (
     active_team_count,
     category_belongs,
     local_now,
+    normalize_racer_code,
     registration_state,
     team_to_public,
     team_to_read,
@@ -92,6 +93,14 @@ def _replace_members(session: Session, team: Team, members: List[TeamMemberIn]) 
     cleaned = []
     for m in members:
         name = (m.name or "").strip()
+        email = (m.email or "").strip().lower() or None
+        code = normalize_racer_code(m.racer_code)
+        coded_user = None
+        if code:
+            coded_user = session.exec(select(User).where(User.racer_code == code)).first()
+            if not coded_user:
+                raise HTTPException(status_code=422, detail=f"Kód závodníka {code} neexistuje – zkontroluj ho v profilu závodníka")
+            name = name or coded_user.full_name
         if not name:
             continue
         if m.leg_id is not None:
@@ -100,17 +109,17 @@ def _replace_members(session: Session, team: Team, members: List[TeamMemberIn]) 
             if m.leg_id in seen_legs:
                 raise HTTPException(status_code=422, detail="Na každý úsek může být zapsaný jen jeden člen")
             seen_legs.add(m.leg_id)
-        cleaned.append((m.leg_id, name, (m.email or "").strip().lower() or None))
+        cleaned.append((m.leg_id, name, email, code, coded_user))
 
     team.member_rows.clear()  # delete-orphan smaže staré řádky
     session.flush()
 
-    for leg_id, name, email in cleaned:
-        user_id = None
-        if email:
+    for leg_id, name, email, code, coded_user in cleaned:
+        user_id = coded_user.id if coded_user else None
+        if user_id is None and email:
             linked = session.exec(select(User).where(User.email == email)).first()
             user_id = linked.id if linked else None
-        session.add(TeamMember(team_id=team.id, leg_id=leg_id, name=name, email=email, user_id=user_id))
+        session.add(TeamMember(team_id=team.id, leg_id=leg_id, name=name, email=email, racer_code=code, user_id=user_id))
 
 
 def _commit_team(session: Session) -> None:

@@ -75,7 +75,7 @@ export default function PrivacyPage() {
         <li>
           Správce zpracovává tyto kategorie osobních údajů:
           <Ul>
-            <li>identifikační údaje: jméno, příjmení, ročník narození, oddíl,</li>
+            <li>identifikační údaje: jméno, příjmení, ročník narození, oddíl, kód závodníka,</li>
             <li>kontaktní údaje: e-mail, telefon,</li>
             <li>přihlašovací údaje: e-mail a heslo (ukládá se pouze jako jednosměrný šifrovaný otisk),</li>
             <li>údaje o přihláškách: název týmu, kategorie, sestava po úsecích, startovní číslo, poznámka,</li>
@@ -84,8 +84,8 @@ export default function PrivacyPage() {
           </Ul>
         </li>
         <li>
-          Pokud Vás do sestavy uvede kapitán týmu, zpracovává správce Vaše jméno a případně e-mail, který slouží pouze
-          k propojení přihlášky s Vaším účtem. Kapitán by Vás o přihlášce měl informovat.
+          Pokud Vás do sestavy uvede kapitán týmu, zpracovává správce Vaše jméno a případně e-mail nebo kód závodníka,
+          které slouží pouze k propojení přihlášky s Vaším účtem. Kapitán by Vás o přihlášce měl informovat.
         </li>
       </Article>
 

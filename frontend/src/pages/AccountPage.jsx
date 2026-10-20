@@ -69,6 +69,41 @@ function OrganizerRequestCard({ user, setUser }) {
   );
 }
 
+function RacerCodeCard({ code }) {
+  const [copied, setCopied] = useState(false);
+  if (!code) return null;
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      /* schránka nemusí být dostupná */
+    }
+  }
+  return (
+    <Card className="p-6 mb-6 bg-gold/10 border-gold/50">
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div>
+          <h2 className="font-display text-xl font-bold uppercase mb-1">Kód závodníka</h2>
+          <p className="text-sm text-forest-700/70 max-w-md">
+            Dej ho kapitánovi – zadá ho do přihlášky místo e-mailu a výsledky se ti připíšou do účtu i rankingu.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={copy}
+          title="Zkopírovat"
+          className="font-display text-3xl font-bold tracking-[0.2em] bg-white border-2 border-forest-900 rounded-md px-4 py-2 hover:bg-forest-50"
+        >
+          {code}
+          <span className="block text-[10px] tracking-normal font-normal text-forest-700/60">{copied ? "zkopírováno ✓" : "klikni pro zkopírování"}</span>
+        </button>
+      </div>
+    </Card>
+  );
+}
+
 function DeleteAccountCard() {
   const { logout } = useAuth();
   const navigate = useNavigate();
@@ -165,6 +200,8 @@ export default function AccountPage() {
         <h1 className="font-display text-4xl font-extrabold uppercase tracking-tight">Můj účet</h1>
         <Badge tone="gold">{ROLE_LABELS[user.role]}</Badge>
       </div>
+
+      <RacerCodeCard code={user.racer_code} />
 
       <OrganizerRequestCard user={user} setUser={setUser} />
 

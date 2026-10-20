@@ -1,5 +1,6 @@
 """Sdílená logika: stav přihlášek, převody modelů na výstupní schémata."""
 import os
+import secrets
 from datetime import datetime
 from typing import Optional, Tuple
 from zoneinfo import ZoneInfo
@@ -142,7 +143,7 @@ def team_to_read(team: Team) -> TeamRead:
         dnf=team.dnf,
         updated_at=team.updated_at,
         members=[
-            TeamMemberRead(id=m.id, leg_id=m.leg_id, name=m.name, email=m.email, user_id=m.user_id)
+            TeamMemberRead(id=m.id, leg_id=m.leg_id, name=m.name, email=m.email, racer_code=m.racer_code, user_id=m.user_id)
             for m in _members_sorted(team)
         ],
     )
@@ -160,6 +161,33 @@ def category_belongs(session: Session, category_id: Optional[int], event_id: int
 def team_member_user_ids(session: Session, team_id: int) -> set:
     rows = session.exec(select(TeamMember.user_id).where(TeamMember.team_id == team_id)).all()
     return {r for r in rows if r is not None}
+
+
+RACER_CODE_LEN = 6
+
+
+def new_racer_code(session: Session) -> str:
+    """Náhodný 6místný kód závodníka, který ještě nikdo nemá."""
+    while True:
+        code = f"{secrets.randbelow(10 ** RACER_CODE_LEN):0{RACER_CODE_LEN}d}"
+        if not session.exec(select(User).where(User.racer_code == code)).first():
+            return code
+
+
+def normalize_racer_code(value: Optional[str]) -> Optional[str]:
+    code = "".join(ch for ch in (value or "") if not ch.isspace())
+    return code or None
+
+
+def ensure_racer_codes(session: Session) -> None:
+    """Doplní kód všem účtům, které ho ještě nemají (např. založeným před zavedením kódů)."""
+    users = session.exec(select(User).where(User.racer_code == None)).all()  # noqa: E711
+    for user in users:
+        user.racer_code = new_racer_code(session)
+        session.add(user)
+        session.flush()
+    if users:
+        session.commit()
 
 
 def delete_account(session: Session, user: User) -> None:
@@ -183,6 +211,7 @@ def delete_account(session: Session, user: User) -> None:
     for m in session.exec(select(TeamMember).where(TeamMember.user_id == user.id)).all():
         m.user_id = None
         m.email = None
+        m.racer_code = None
         session.add(m)
     for ev in session.exec(select(Event).where(Event.organizer_id == user.id)).all():
         ev.organizer_id = None

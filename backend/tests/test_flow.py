@@ -326,3 +326,24 @@ def test_ranking(client):
     assert client.patch("/api/auth/me", json={"hide_from_ranking": True}, headers=b_h).json()["hide_from_ranking"] is True
     names = [r["name"] for r in client.get("/api/ranking?year=2030").json()["rows"]]
     assert names == ["Adam Rychlý"]
+
+
+def test_racer_code_links_member(client):
+    _, org_h = make_organizer(client)
+    ev = make_event(client, org_h)
+    legs = client.get(f"/api/events/{ev['id']}/legs").json()
+    cap_h, _ = register(client, "kap@test.cz", "Karel", "Kapitán")
+    run_h, runner = register(client, "run@test.cz", "Rita", "Běžná")
+    code = runner["racer_code"]
+    assert len(code) == 6 and code.isdigit()
+    # chybný kód
+    r = client.post(f"/api/events/{ev['id']}/entries", json={"name": "T", "members": [{"leg_id": legs[0]["id"], "racer_code": "000000" if code != "000000" else "111111"}]}, headers=cap_h)
+    assert r.status_code == 422 and "neexistuje" in r.json()["detail"]
+    # kód bez jména – jméno se doplní z účtu, mezery se ignorují
+    r = client.post(f"/api/events/{ev['id']}/entries", json={"name": "T", "members": [{"leg_id": legs[0]["id"], "racer_code": f" {code[:3]} {code[3:]} "}]}, headers=cap_h)
+    assert r.status_code == 201, r.text
+    m = r.json()["members"][0]
+    assert m["name"] == "Rita Běžná" and m["user_id"] == runner["id"] and m["racer_code"] == code
+    assert len(client.get("/api/me/entries", headers=run_h).json()) == 1
+    # veřejný seznam kód neukazuje
+    assert "racer_code" not in client.get(f"/api/events/{ev['id']}/entries").json()[0]["members"][0]
