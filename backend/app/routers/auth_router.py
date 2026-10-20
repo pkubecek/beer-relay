@@ -11,7 +11,7 @@ from ..auth import (
     verify_password,
 )
 from ..database import get_session
-from ..services import delete_account, new_racer_code
+from ..services import delete_account, new_racer_code, normalize_racer_code
 from ..models import (
     AccountDelete,
     OrganizerRequestIn,
@@ -132,3 +132,13 @@ def delete_me(payload: AccountDelete, user: User = Depends(get_current_user), se
     if not verify_password(payload.password, user.password_hash):
         raise HTTPException(status_code=400, detail="Heslo nesedí")
     delete_account(session, user)
+
+
+@router.get("/racer/{code}")
+def lookup_racer(code: str, session: Session = Depends(get_session), _: User = Depends(get_current_user)):
+    """Jméno závodníka podle kódu – pro předvyplnění sestavy v přihlášce (jen pro přihlášené)."""
+    code = normalize_racer_code(code)
+    racer = session.exec(select(User).where(User.racer_code == code)).first() if code else None
+    if not racer or not racer.is_active:
+        raise HTTPException(status_code=404, detail="Kód závodníka neexistuje")
+    return {"name": racer.full_name, "club": racer.club}

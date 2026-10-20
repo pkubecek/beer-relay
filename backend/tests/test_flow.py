@@ -347,3 +347,13 @@ def test_racer_code_links_member(client):
     assert len(client.get("/api/me/entries", headers=run_h).json()) == 1
     # veřejný seznam kód neukazuje
     assert "racer_code" not in client.get(f"/api/events/{ev['id']}/entries").json()[0]["members"][0]
+
+
+def test_racer_lookup(client):
+    h, _ = register(client, "x@test.cz", "Xaver", "Hledač")
+    _, runner = register(client, "r@test.cz", "Rita", "Běžná")
+    assert client.get(f"/api/auth/racer/{runner['racer_code']}").status_code in (401, 403)
+    r = client.get(f"/api/auth/racer/{runner['racer_code']}", headers=h)
+    assert r.status_code == 200 and r.json()["name"] == "Rita Běžná"
+    bad = "000000" if runner["racer_code"] != "000000" else "111111"
+    assert client.get(f"/api/auth/racer/{bad}", headers=h).status_code == 404

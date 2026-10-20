@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button, Input, Label, Select, Textarea } from "./ui";
 import { legLabel } from "../lib/format";
+import { api } from "../lib/api";
 
 const CODE_RE = /^\d{6}$/;
 const isCode = (v) => CODE_RE.test((v || "").replace(/\s/g, ""));
@@ -24,6 +25,8 @@ export default function TeamRegistrationForm({ legs, categories, initial, user, 
         // jedno pole: e-mail nebo 6místný kód závodníka
         link: byLeg[leg.id]?.email || byLeg[leg.id]?.racer_code || (!initial && i === 0 && user ? user.racer_code || user.email : ""),
         linked: !!byLeg[leg.id]?.user_id,
+        autoName: "", // jméno doplněné podle kódu (smí se přepsat dalším kódem)
+        codeError: "",
       })),
     };
   });
@@ -33,6 +36,31 @@ export default function TeamRegistrationForm({ legs, categories, initial, user, 
   const update = (field, value) => setForm((f) => ({ ...f, [field]: value }));
   const updateMember = (i, patch) =>
     setForm((f) => ({ ...f, members: f.members.map((m, j) => (j === i ? { ...m, ...patch } : m)) }));
+
+  // Po zadání kódu závodníka doplní jméno z jeho účtu.
+  async function handleLinkChange(i, value) {
+    updateMember(i, { link: value, linked: false, codeError: "" });
+    if (!isCode(value)) return;
+    const code = value.replace(/\s/g, "");
+    try {
+      const racer = await api.lookupRacer(code);
+      setForm((f) => ({
+        ...f,
+        members: f.members.map((m, j) => {
+          if (j !== i || (m.link || "").replace(/\s/g, "") !== code) return m; // mezitím se pole změnilo
+          const replaceName = !m.name.trim() || m.name === m.autoName;
+          return { ...m, linked: true, codeError: "", ...(replaceName ? { name: racer.name, autoName: racer.name } : {}) };
+        }),
+      }));
+    } catch {
+      setForm((f) => ({
+        ...f,
+        members: f.members.map((m, j) =>
+          j === i && (m.link || "").replace(/\s/g, "") === code ? { ...m, linked: false, codeError: "Neznámý kód závodníka" } : m
+        ),
+      }));
+    }
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -106,7 +134,7 @@ export default function TeamRegistrationForm({ legs, categories, initial, user, 
                   <span className="text-sm font-semibold truncate">{legLabel(leg)}</span>
                 </div>
                 <Input
-                  placeholder={isCode(form.members[i].link) ? "Jméno se doplní z účtu" : "Jméno závodníka"}
+                  placeholder={isCode(form.members[i].link) && !form.members[i].codeError ? "Jméno se doplní z účtu" : "Jméno závodníka"}
                   value={form.members[i].name}
                   onChange={(e) => updateMember(i, { name: e.target.value })}
                 />
@@ -115,11 +143,14 @@ export default function TeamRegistrationForm({ legs, categories, initial, user, 
                     placeholder="Kód závodníka nebo e-mail"
                     title="6místný kód najde závodník ve svém profilu (Můj účet). Díky němu se mu přihláška i výsledky připíšou do účtu a rankingu."
                     value={form.members[i].link || ""}
-                    onChange={(e) => updateMember(i, { link: e.target.value, linked: false })}
-                    className={form.members[i].linked ? "pr-8" : ""}
+                    onChange={(e) => handleLinkChange(i, e.target.value)}
+                    className={`${form.members[i].linked ? "pr-8" : ""} ${form.members[i].codeError ? "!border-punch" : ""}`}
                   />
                   {form.members[i].linked && (
                     <span className="absolute right-2 top-1/2 -translate-y-1/2 text-leaf text-sm" title="Propojeno s účtem závodníka">✓</span>
+                  )}
+                  {form.members[i].codeError && (
+                    <p className="text-[11px] text-punch mt-0.5">{form.members[i].codeError}</p>
                   )}
                 </div>
               </div>

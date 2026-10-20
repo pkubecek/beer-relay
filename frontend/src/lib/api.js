@@ -128,6 +128,7 @@ export const api = {
   updateEntry: (teamId, data) => request(`/api/entries/${teamId}`, { method: "PUT", body: data }),
   deleteEntry: (teamId) => request(`/api/entries/${teamId}`, { method: "DELETE" }),
   myEntries: () => request("/api/me/entries"),
+  lookupRacer: (code) => request(`/api/auth/racer/${encodeURIComponent(code)}`),
   ranking: (params = {}) => request(`/api/ranking${qs(params)}`),
   listEntriesManage: (eventId) => request(`/api/events/${eventId}/entries/manage`),
   manageEntry: (teamId, data) => request(`/api/entries/${teamId}/manage`, { method: "PATCH", body: data }),
