@@ -98,8 +98,8 @@ export default function PrivacyPage() {
               (vedení účtu a přihlašování na závody),
             </li>
             <li>
-              oprávněný zájem správce a pořadatelů podle čl. 6 odst. 1 písm. f) GDPR na zveřejňování startovních listin
-              a výsledků závodů a na zajištění bezpečnosti webu.
+              oprávněný zájem správce a pořadatelů podle čl. 6 odst. 1 písm. f) GDPR na zveřejňování startovních listin,
+              výsledků závodů a rankingu závodníků a na zajištění bezpečnosti webu.
             </li>
           </Ul>
         </li>
@@ -111,13 +111,15 @@ export default function PrivacyPage() {
               přihlášení týmu na závod a jeho organizace pořadatelem; bez poskytnutí povinných údajů (jméno, příjmení,
               e-mail) není možné účet založit ani se na závod přihlásit,
             </li>
-            <li>zveřejnění startovní listiny a výsledků závodu,</li>
+            <li>zveřejnění startovní listiny, výsledků závodu a rankingu závodníků,</li>
             <li>zajištění provozu a bezpečnosti webu.</li>
           </Ul>
         </li>
         <li>
           Veřejně jsou zobrazeny pouze názvy týmů, oddíly, jména závodníků v sestavách, startovní čísla a výsledky.
-          E-mail a telefon veřejně zobrazeny nejsou.
+          Závodníci s účtem jsou dále uvedeni v rankingu (jméno, oddíl, body a výsledky); zobrazení v rankingu lze
+          vypnout v sekci <Link to="/ucet" className="text-wood underline">Můj účet</Link>. E-mail a telefon veřejně
+          zobrazeny nejsou.
         </li>
         <li>
           Správce nezpracovává osobní údaje pro účely marketingu, nezasílá obchodní sdělení a nepoužívá reklamní ani
@@ -157,8 +159,8 @@ export default function PrivacyPage() {
             </li>
             <li>
               podílející se na zajištění provozu služeb – Railway Corporation (server a databáze), Vercel Inc.
-              (provoz webu), OpenStreetMap Foundation (mapové podklady a vyhledávání adres) a Google LLC (písma
-              Google Fonts); poslední dva vidí pouze IP adresu Vašeho prohlížeče.
+              (provoz webu) a OpenStreetMap Foundation (mapové podklady a vyhledávání adres; vidí pouze IP adresu
+              Vašeho prohlížeče). Písma webu se načítají přímo z našeho serveru, ne od třetích stran.
             </li>
           </Ul>
         </li>

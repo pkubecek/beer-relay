@@ -21,9 +21,11 @@ export default {
         leaf: "#4A7043",
       },
       fontFamily: {
-        display: ["'Big Shoulders'", "sans-serif"],
-        body: ["'Work Sans'", "sans-serif"],
-        mono: ["'JetBrains Mono'", "monospace"],
+        // Josefin Sans pro všechno (self-hosted přes @fontsource, včetně české diakritiky)
+        sans: ["'Josefin Sans Variable'", "'Josefin Sans'", "system-ui", "sans-serif"],
+        display: ["'Josefin Sans Variable'", "'Josefin Sans'", "system-ui", "sans-serif"],
+        body: ["'Josefin Sans Variable'", "'Josefin Sans'", "system-ui", "sans-serif"],
+        mono: ["'Josefin Sans Variable'", "'Josefin Sans'", "system-ui", "sans-serif"],
       },
       backgroundImage: {
         "route-dash":

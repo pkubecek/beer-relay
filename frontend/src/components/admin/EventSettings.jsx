@@ -7,7 +7,7 @@ import { MapPicker } from "../Map";
 
 const FIELDS = [
   "name", "slug", "location", "event_date", "start_time", "description", "status", "entries_open_at", "entry_deadline",
-  "entry_fee", "max_teams", "require_approval", "contact_email", "website", "lat", "lon",
+  "entry_fee", "max_teams", "require_approval", "contact_email", "website", "lat", "lon", "count_in_ranking",
 ];
 
 function toForm(event) {
@@ -16,6 +16,7 @@ function toForm(event) {
   f.entries_open_at = toDateTimeInput(event.entries_open_at);
   f.entry_deadline = toDateTimeInput(event.entry_deadline);
   f.require_approval = !!event.require_approval;
+  f.count_in_ranking = event.count_in_ranking !== false;
   f.lat = event.lat ?? null;
   f.lon = event.lon ?? null;
   return f;
@@ -169,6 +170,10 @@ export default function EventSettings({ event, onSaved }) {
           <label className="sm:col-span-2 flex items-center gap-2 text-sm">
             <input type="checkbox" checked={form.require_approval} onChange={(e) => update("require_approval", e.target.checked)} />
             Přihlášky musím schválit (jinak jsou rovnou potvrzené)
+          </label>
+          <label className="sm:col-span-2 flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={form.count_in_ranking} onChange={(e) => update("count_in_ranking", e.target.checked)} />
+            Započítávat výsledky do rankingu závodníků
           </label>
         </div>
       </Card>

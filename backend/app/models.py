@@ -55,6 +55,7 @@ class User(UserBase, table=True):
     # žádost závodníka o právo zakládat závody (vyřizuje admin)
     organizer_request_at: Optional[datetime] = None
     organizer_request_note: Optional[str] = None
+    hide_from_ranking: bool = False  # závodník se nechce zobrazovat v rankingu
 
     @property
     def full_name(self) -> str:
@@ -79,6 +80,7 @@ class UserRead(UserBase):
     created_at: datetime
     organizer_request_at: Optional[datetime] = None
     organizer_request_note: Optional[str] = None
+    hide_from_ranking: bool = False
 
 
 class OrganizerRequestIn(SQLModel):
@@ -91,6 +93,7 @@ class UserUpdate(SQLModel):
     birth_year: Optional[int] = None
     club: Optional[str] = None
     phone: Optional[str] = None
+    hide_from_ranking: Optional[bool] = None
 
 
 class PasswordChange(SQLModel):
@@ -149,6 +152,7 @@ class EventBase(SQLModel):
     require_approval: bool = True                # přihláška musí být schválena pořadatelem
     contact_email: Optional[str] = None
     website: Optional[str] = None
+    count_in_ranking: bool = True                # výsledky se započítávají do rankingu závodníků
 
 
 class Event(EventBase, table=True):
@@ -184,6 +188,7 @@ class EventUpdate(SQLModel):
     require_approval: Optional[bool] = None
     contact_email: Optional[str] = None
     website: Optional[str] = None
+    count_in_ranking: Optional[bool] = None
     organizer_id: Optional[int] = None  # mění jen admin
 
 

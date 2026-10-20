@@ -291,3 +291,38 @@ def test_publish_requirements_and_auto_close(client):
     sess.add(e)
     sess.commit()
     assert client.get("/api/events").json()[0]["status"] == "closed"
+
+
+def test_ranking(client):
+    _, org_h = make_organizer(client)
+    a_h, a = register(client, "a@test.cz", "Adam", "Rychlý")
+    b_h, b = register(client, "b@test.cz", "Bára", "Pomalá")
+
+    def race(name, d, a_place, b_place, **extra):
+        ev = make_event(client, org_h, name=name, event_date=d, require_approval=False, **extra)
+        leg = client.get(f"/api/events/{ev['id']}/legs").json()[0]
+        ta = client.post(f"/api/events/{ev['id']}/entries", json={"name": "A" + name, "members": [{"leg_id": leg["id"], "name": "Adam", "email": "a@test.cz"}]}, headers=a_h).json()
+        tb = client.post(f"/api/events/{ev['id']}/entries", json={"name": "B" + name, "members": [{"leg_id": leg["id"], "name": "Bára", "email": "b@test.cz"}]}, headers=b_h).json()
+        r = client.put(f"/api/events/{ev['id']}/results", json=[{"team_id": ta["id"], "place": a_place}, {"team_id": tb["id"], "place": b_place}], headers=org_h)
+        assert r.status_code == 200, r.text
+        return ev
+
+    race("R1", "2030-03-01", 1, 2)   # A 80, B 60
+    race("R2", "2030-04-01", 3, 1)   # A 45, B 80
+    race("R3", "2030-05-01", 2, 7)   # A 60, B 0
+    race("R4", "2030-06-01", 6, 4)   # A 10 (nezapočte), B 30
+    fun = race("R5", "2030-07-01", 1, 2, count_in_ranking=False)  # nepočítá se
+
+    data = client.get("/api/ranking?year=2030").json()
+    rows = {r["name"]: r for r in data["rows"]}
+    assert rows["Adam Rychlý"]["points"] == 80 + 60 + 45
+    assert rows["Bára Pomalá"]["points"] == 80 + 60 + 30
+    assert data["rows"][0]["name"] == "Adam Rychlý" and data["rows"][0]["rank"] == 1
+    assert rows["Adam Rychlý"]["races"] == 4
+    assert [r["counted"] for r in rows["Adam Rychlý"]["results"]] == [True, True, True, False]
+    assert all(r["event_id"] != fun["id"] for r in rows["Adam Rychlý"]["results"])
+
+    # skrytí z rankingu
+    assert client.patch("/api/auth/me", json={"hide_from_ranking": True}, headers=b_h).json()["hide_from_ranking"] is True
+    names = [r["name"] for r in client.get("/api/ranking?year=2030").json()["rows"]]
+    assert names == ["Adam Rychlý"]

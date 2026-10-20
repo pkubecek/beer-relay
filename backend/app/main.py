@@ -9,7 +9,7 @@ from .auth import ADMIN_EMAILS, apply_bootstrap_admin
 from . import database
 from .database import init_db
 from .models import User
-from .routers import auth_router, events_router, results_router, teams_router, users_router
+from .routers import auth_router, events_router, ranking_router, results_router, teams_router, users_router
 
 
 def _promote_bootstrap_admins() -> None:
@@ -53,6 +53,7 @@ app.include_router(users_router.router)
 app.include_router(events_router.router)
 app.include_router(teams_router.router)
 app.include_router(results_router.router)
+app.include_router(ranking_router.router)
 
 
 @app.get("/api/health")

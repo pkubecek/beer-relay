@@ -127,6 +127,7 @@ export default function AccountPage() {
   const { user, setUser } = useAuth();
   const [form, setForm] = useState({
     first_name: user.first_name, last_name: user.last_name, birth_year: user.birth_year, club: user.club, phone: user.phone,
+    hide_from_ranking: !!user.hide_from_ranking,
   });
   const [msg, setMsg] = useState({ profile: "", password: "" });
   const [err, setErr] = useState({ profile: "", password: "" });
@@ -173,6 +174,10 @@ export default function AccountPage() {
         <form onSubmit={saveProfile} className="space-y-4">
           {err.profile && <p className="text-punch text-sm">{err.profile}</p>}
           <ProfileFields form={form} update={update} />
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={!form.hide_from_ranking} onChange={(e) => update("hide_from_ranking", !e.target.checked)} />
+            Zobrazovat mě v <Link to="/ranking" className="text-wood underline">rankingu závodníků</Link>
+          </label>
           <div className="flex items-center gap-3">
             <Button type="submit">Uložit profil</Button>
             {msg.profile && <span className="text-leaf text-sm">{msg.profile}</span>}

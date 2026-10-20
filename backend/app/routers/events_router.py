@@ -142,6 +142,8 @@ def update_event(
         updates.pop("slug")
     if "name" in updates and not (updates["name"] or "").strip():
         raise HTTPException(status_code=422, detail="Název závodu nesmí být prázdný")
+    if updates.get("count_in_ranking", True) is None:
+        updates.pop("count_in_ranking")
     for k, v in updates.items():
         setattr(event, k, v)
     try:

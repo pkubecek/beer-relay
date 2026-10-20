@@ -11,6 +11,7 @@ import AdminDashboardPage from "./pages/AdminDashboardPage";
 import AdminEventPage from "./pages/AdminEventPage";
 import AdminUsersPage from "./pages/AdminUsersPage";
 import PrivacyPage from "./pages/PrivacyPage";
+import RankingPage from "./pages/RankingPage";
 import { RequireAuth } from "./lib/auth";
 
 export default function App() {
@@ -22,6 +23,7 @@ export default function App() {
         <Route path="/zavody/:slug" element={<EventPage />} />
         <Route path="/prihlaseni" element={<LoginPage />} />
         <Route path="/registrace" element={<RegisterPage />} />
+        <Route path="/ranking" element={<RankingPage />} />
         <Route path="/ochrana-udaju" element={<PrivacyPage />} />
 
         {/* přihlášený uživatel */}

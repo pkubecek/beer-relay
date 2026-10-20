@@ -79,6 +79,8 @@ def me(user: User = Depends(get_current_user)):
 @router.patch("/me", response_model=UserRead)
 def update_me(payload: UserUpdate, user: User = Depends(get_current_user), session: Session = Depends(get_session)):
     for k, v in payload.model_dump(exclude_unset=True).items():
+        if k == "hide_from_ranking" and v is None:
+            continue
         if k in ("first_name", "last_name") and (v is None or not str(v).strip()):
             raise HTTPException(status_code=422, detail="Jméno a příjmení nesmí být prázdné")
         setattr(user, k, v)

@@ -57,6 +57,7 @@ export default function Layout({ children }) {
             className={`${open ? "flex" : "hidden"} md:flex absolute md:static top-16 left-0 right-0 z-20 bg-forest-900 md:bg-transparent flex-col md:flex-row items-start md:items-center gap-4 px-5 py-4 md:p-0 text-sm font-medium`}
           >
             <NavItem to="/" onClick={close}>Kalendář</NavItem>
+            <NavItem to="/ranking" onClick={close}>Ranking</NavItem>
             {user && <NavItem to="/moje-prihlasky" onClick={close}>Moje přihlášky</NavItem>}
             {hasRole(user, "organizer") && <NavItem to="/admin" onClick={close}>Správa závodů</NavItem>}
             {isAdmin && (
