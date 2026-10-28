@@ -14,7 +14,7 @@ export default function MyEntriesPage() {
 
   return (
     <div>
-      <PageHero overlap eyebrow="Týmy, ve kterých běžíš" title="Moje přihlášky" subtitle="Přehled tvých týmů – sestavu můžeš jako kapitán upravovat až do uzávěrky." />
+      <PageHero overlap title="Moje přihlášky" subtitle="Přehled tvých týmů – sestavu můžeš jako kapitán upravovat až do uzávěrky." />
       {error && <p className="text-punch">{error}</p>}
       {entries === null && !error && <p className="text-forest-700/60">Načítám…</p>}
       {entries?.length === 0 && (

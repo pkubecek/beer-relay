@@ -25,9 +25,8 @@ export default function RankingPage() {
     <div>
       <PageHero
         overlap
-        eyebrow="Sezónní žebříček závodníků"
         title="Ranking"
-        subtitle="Body za umístění týmu dostane každý člen sestavy s účtem."
+        subtitle="Body za umístění týmu dostane každý člen s účtem."
         aside={
           data && (
             <div className="w-40">

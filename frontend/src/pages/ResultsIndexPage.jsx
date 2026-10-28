@@ -23,7 +23,6 @@ export default function ResultsIndexPage() {
     <div>
       <PageHero
         overlap
-        eyebrow="Oficiální výsledkové listiny"
         title="Výsledky"
         subtitle="Pořadí týmů po kategoriích ze všech vyhodnocených pivních štafet."
       />

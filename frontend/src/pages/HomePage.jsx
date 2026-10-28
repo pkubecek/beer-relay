@@ -127,10 +127,7 @@ function OrganizerWidget({ user }) {
   const label = hasRole(user, "organizer") ? "Správa závodů" : "Začít pořádat";
   return (
     <div className="rounded-2xl bg-gold p-5 text-forest-900">
-      <h3 className="font-display text-lg font-extrabold mb-1">Pořádáš štafetu?</h3>
-      <p className="text-sm text-forest-900/75 mb-4">
-        Přihlášky, sestavy i výsledky na jednom místě – bez tabulek a e-mailů.
-      </p>
+      <h3 className="font-display text-lg font-extrabold mb-1">Pořádáš pivní?</h3>
       <Link to={to} className="inline-flex rounded-xl bg-forest-900 hover:bg-forest-700 text-foam text-sm font-semibold px-4 py-2 transition-colors">
         {label}
       </Link>
@@ -161,7 +158,6 @@ export default function HomePage() {
         overlap
         eyebrow="Přihlášky · pořádání · výsledky"
         title="Kalendář"
-        subtitle="Najdi závod, slož sestavu po úsecích a přihlas tým za pár minut."
         aside={<SearchBox value={q} onChange={setQ} onSubmit={() => setQuery(q)} />}
       />
 
