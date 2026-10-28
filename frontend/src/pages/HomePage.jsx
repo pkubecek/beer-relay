@@ -156,7 +156,6 @@ export default function HomePage() {
     <div>
       <PageHero
         overlap
-        eyebrow="Přihlášky · pořádání · výsledky"
         title="Kalendář"
         aside={<SearchBox value={q} onChange={setQ} onSubmit={() => setQuery(q)} />}
       />
