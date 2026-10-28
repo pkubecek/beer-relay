@@ -30,7 +30,9 @@ def test_auth_basics(client):
     assert client.post("/api/auth/login", json={"email": "pepa@test.cz", "password": "tajneheslo"}).status_code == 200
     assert client.get("/api/auth/me", headers=h).json()["email"] == "pepa@test.cz"
     assert client.patch("/api/auth/me", json={"club": "SK Pivo"}, headers=h).json()["club"] == "SK Pivo"
-    assert client.post("/api/auth/me/password", json={"current_password": "tajneheslo", "new_password": "noveheslo1"}, headers=h).status_code == 204
+    r = client.post("/api/auth/me/password", json={"current_password": "tajneheslo", "new_password": "noveheslo1"}, headers=h)
+    assert r.status_code == 200 and r.json()["access_token"]
+    h = {"Authorization": f"Bearer {r.json()['access_token']}"}  # starý token po změně hesla neplatí
     assert client.post("/api/auth/login", json={"email": "pepa@test.cz", "password": "noveheslo1"}).status_code == 200
     # bootstrap admin
     _, admin = register(client, "admin@test.cz")
@@ -357,3 +359,50 @@ def test_racer_lookup(client):
     assert r.status_code == 200 and r.json()["name"] == "Rita Běžná"
     bad = "000000" if runner["racer_code"] != "000000" else "111111"
     assert client.get(f"/api/auth/racer/{bad}", headers=h).status_code == 404
+
+
+def test_password_change_revokes_old_tokens(client):
+    import time
+    old_h, _ = register(client, "token@test.cz")
+    other_device = {"Authorization": f"Bearer {client.post('/api/auth/login', json={'email': 'token@test.cz', 'password': 'tajneheslo'}).json()['access_token']}"}
+    time.sleep(1.1)  # tokeny mají přesnost na sekundy
+    r = client.post("/api/auth/me/password", json={"current_password": "tajneheslo", "new_password": "noveheslo1"}, headers=old_h)
+    assert r.status_code == 200
+    new_h = {"Authorization": f"Bearer {r.json()['access_token']}"}
+    assert client.get("/api/auth/me", headers=old_h).status_code == 401
+    assert client.get("/api/auth/me", headers=other_device).status_code == 401
+    assert client.get("/api/auth/me", headers=new_h).status_code == 200
+
+
+def test_admin_password_reset_revokes_tokens(client):
+    import time
+    admin_h, _ = register(client, "admin@test.cz")
+    h, u = register(client, "reset@test.cz")
+    time.sleep(1.1)
+    assert client.patch(f"/api/users/{u['id']}", json={"new_password": "resetnute1"}, headers=admin_h).status_code == 200
+    assert client.get("/api/auth/me", headers=h).status_code == 401
+    assert client.post("/api/auth/login", json={"email": "reset@test.cz", "password": "resetnute1"}).status_code == 200
+
+
+def test_event_website_must_be_http(client):
+    _, org_h = make_organizer(client)
+    bad = client.post("/api/events", json={"name": "X", "website": "javascript:alert(1)"}, headers=org_h)
+    assert bad.status_code == 422
+    ev = client.post("/api/events", json={"name": "Y", "website": "www.stafeta.cz"}, headers=org_h).json()
+    assert ev["website"] == "https://www.stafeta.cz"
+    assert client.patch(f"/api/events/{ev['id']}", json={"website": "data:text/html,x"}, headers=org_h).status_code == 422
+    assert client.patch(f"/api/events/{ev['id']}", json={"website": ""}, headers=org_h).json()["website"] is None
+
+
+def test_draft_legs_and_categories_hidden(client):
+    _, org_h = make_organizer(client)
+    ev = client.post("/api/events", json={"name": "Koncept"}, headers=org_h).json()
+    client.post(f"/api/events/{ev['id']}/legs", json={"order": 1, "name": "Tajný úsek"}, headers=org_h)
+    assert client.get(f"/api/events/{ev['id']}/legs").status_code == 404
+    assert client.get(f"/api/events/{ev['id']}/categories").status_code == 404
+    assert client.get(f"/api/events/{ev['id']}/legs", headers=org_h).status_code == 200
+
+
+def test_api_docs_disabled_by_default(client):
+    assert client.get("/docs").status_code == 404
+    assert client.get("/openapi.json").status_code == 404

@@ -32,7 +32,17 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title="Pivní štafety", version="2.0.0", lifespan=lifespan)
+# Dokumentace API (/docs, /redoc, /openapi.json) je jen na vyžádání – v produkci nemá být veřejná.
+ENABLE_DOCS = os.getenv("ENABLE_DOCS", "").strip().lower() in ("1", "true", "yes")
+
+app = FastAPI(
+    title="Pivní štafety",
+    version="2.0.0",
+    lifespan=lifespan,
+    docs_url="/docs" if ENABLE_DOCS else None,
+    redoc_url="/redoc" if ENABLE_DOCS else None,
+    openapi_url="/openapi.json" if ENABLE_DOCS else None,
+)
 
 # Tolerantní k překlepům: mezery, uvozovky a lomítko na konci se ořežou.
 allowed_origins = [

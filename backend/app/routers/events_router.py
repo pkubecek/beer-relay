@@ -45,6 +45,28 @@ def slugify(text: str) -> str:
     return s or "zavod"
 
 
+def clean_website(value: Optional[str]) -> Optional[str]:
+    """Web závodu smí být jen obyčejný http(s) odkaz (žádné javascript: apod.)."""
+    value = (value or "").strip()
+    if not value:
+        return None
+    if not re.match(r"^https?://", value, re.IGNORECASE):
+        if re.match(r"^[a-z][a-z0-9+.-]*:", value, re.IGNORECASE):
+            raise HTTPException(status_code=422, detail="Web musí být odkaz začínající http:// nebo https://")
+        value = "https://" + value  # „www.zavod.cz“ -> „https://www.zavod.cz“
+    if len(value) > 500 or any(c.isspace() for c in value):
+        raise HTTPException(status_code=422, detail="Neplatná adresa webu")
+    return value
+
+
+def _public_event(session: Session, event_id: int, user: Optional[User]) -> Event:
+    """Závod pro veřejné čtení – koncept vidí jen ten, kdo ho spravuje."""
+    event = session.get(Event, event_id)
+    if not event or (event.status == EventStatus.draft and not can_manage_event(user, event)):
+        raise HTTPException(status_code=404, detail="Závod nenalezen")
+    return event
+
+
 def _unique_slug(session: Session, base: str, exclude_id: Optional[int] = None) -> str:
     slug = slugify(base)
     existing = session.exec(select(Event).where(Event.slug == slug)).first()
@@ -112,6 +134,7 @@ def get_event(slug: str, session: Session = Depends(get_session), user: Optional
 def create_event(payload: EventCreate, session: Session = Depends(get_session), user: User = Depends(require_organizer)):
     data = payload.model_dump()
     data["slug"] = _unique_slug(session, data.get("slug") or payload.name)
+    data["website"] = clean_website(data.get("website"))
     event = Event(**data, organizer_id=user.id)
     check_publishable(event)
     close_if_expired(event)
@@ -136,6 +159,8 @@ def update_event(
         new_org = session.get(User, updates["organizer_id"]) if updates["organizer_id"] else None
         if updates["organizer_id"] and (not new_org or new_org.role == UserRole.user):
             raise HTTPException(status_code=400, detail="Vybraný uživatel není pořadatel")
+    if "website" in updates:
+        updates["website"] = clean_website(updates["website"])
     if updates.get("slug"):
         updates["slug"] = _unique_slug(session, updates["slug"], exclude_id=event.id)
     elif "slug" in updates:
@@ -170,7 +195,8 @@ def delete_event(event_id: int, session: Session = Depends(get_session), user: U
 # =====================================================================
 
 @router.get("/{event_id}/legs", response_model=List[LegRead])
-def list_legs(event_id: int, session: Session = Depends(get_session)):
+def list_legs(event_id: int, session: Session = Depends(get_session), user: Optional[User] = Depends(get_optional_user)):
+    _public_event(session, event_id, user)
     return session.exec(select(Leg).where(Leg.event_id == event_id).order_by(Leg.order)).all()
 
 
@@ -228,7 +254,8 @@ def _category_read(cat: Category, session: Session) -> CategoryRead:
 
 
 @router.get("/{event_id}/categories", response_model=List[CategoryRead])
-def list_categories(event_id: int, session: Session = Depends(get_session)):
+def list_categories(event_id: int, session: Session = Depends(get_session), user: Optional[User] = Depends(get_optional_user)):
+    _public_event(session, event_id, user)
     cats = session.exec(select(Category).where(Category.event_id == event_id).order_by(Category.order, Category.name)).all()
     return [_category_read(c, session) for c in cats]
 

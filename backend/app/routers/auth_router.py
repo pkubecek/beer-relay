@@ -8,6 +8,7 @@ from ..auth import (
     create_access_token,
     get_current_user,
     hash_password,
+    mark_password_changed,
     verify_password,
 )
 from ..database import get_session
@@ -90,13 +91,17 @@ def update_me(payload: UserUpdate, user: User = Depends(get_current_user), sessi
     return user
 
 
-@router.post("/me/password", status_code=204)
+@router.post("/me/password", response_model=AuthResponse)
 def change_password(payload: PasswordChange, user: User = Depends(get_current_user), session: Session = Depends(get_session)):
+    """Změní heslo, odhlásí všechna ostatní zařízení a vrátí nový token pro to aktuální."""
     if not verify_password(payload.current_password, user.password_hash):
         raise HTTPException(status_code=400, detail="Současné heslo nesedí")
     user.password_hash = hash_password(payload.new_password)
+    mark_password_changed(user)
     session.add(user)
     session.commit()
+    session.refresh(user)
+    return _auth_response(user)
 
 
 @router.post("/me/organizer-request", response_model=UserRead)

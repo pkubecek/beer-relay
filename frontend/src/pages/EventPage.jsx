@@ -219,7 +219,7 @@ export default function EventPage() {
                   )}
                 </Fact>
                 <Fact label="Web">
-                  {event.website && (
+                  {/^https?:\/\//i.test(event.website || "") && (
                     <a className="underline underline-offset-2 hover:text-wood break-all" href={event.website} target="_blank" rel="noreferrer">
                       {event.website}
                     </a>

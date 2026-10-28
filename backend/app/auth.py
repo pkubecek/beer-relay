@@ -1,3 +1,4 @@
+import calendar
 import os
 import warnings
 from datetime import datetime, timedelta
@@ -44,19 +45,34 @@ def verify_password(password: str, password_hash: str) -> bool:
 
 # ---------- tokeny ----------
 
+def _ts(dt: datetime) -> int:
+    """Naivní UTC datetime -> unix timestamp (celé sekundy)."""
+    return calendar.timegm(dt.utctimetuple())
+
+
+def mark_password_changed(user: User) -> None:
+    """Zneplatní všechny dříve vydané tokeny uživatele (volá se při změně hesla)."""
+    user.password_changed_at = datetime.utcnow().replace(microsecond=0)
+
+
 def create_access_token(user: User) -> str:
-    expire = datetime.utcnow() + timedelta(days=ACCESS_TOKEN_EXPIRE_DAYS)
-    return jwt.encode({"sub": str(user.id), "exp": expire}, SECRET_KEY, algorithm=ALGORITHM)
+    now = datetime.utcnow()
+    expire = now + timedelta(days=ACCESS_TOKEN_EXPIRE_DAYS)
+    return jwt.encode({"sub": str(user.id), "iat": _ts(now), "exp": expire}, SECRET_KEY, algorithm=ALGORITHM)
 
 
 def _user_from_token(token: str, session: Session) -> Optional[User]:
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id = int(payload.get("sub"))
+        issued_at = int(payload.get("iat") or 0)
     except (JWTError, TypeError, ValueError):
         return None
     user = session.get(User, user_id)
     if not user or not user.is_active:
+        return None
+    # token vydaný před poslední změnou hesla už neplatí
+    if user.password_changed_at and issued_at < _ts(user.password_changed_at):
         return None
     return user
 

@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func, or_
 from sqlmodel import Session, select
 
-from ..auth import hash_password, require_admin
+from ..auth import hash_password, mark_password_changed, require_admin
 from ..database import get_session
 from ..models import AdminUserRead, AdminUserUpdate, Event, Team, User, UserRole
 from ..services import delete_account
@@ -81,6 +81,7 @@ def update_user(
         user.is_active = data["is_active"]
     if data.get("new_password"):
         user.password_hash = hash_password(data["new_password"])
+        mark_password_changed(user)  # odhlásí uživatele ze všech zařízení
     if data.get("email"):
         email = data["email"].lower().strip()
         other = session.exec(select(User).where(User.email == email)).first()

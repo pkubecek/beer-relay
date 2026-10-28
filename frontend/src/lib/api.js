@@ -92,8 +92,12 @@ export const api = {
   requestOrganizer: (note) => request("/api/auth/me/organizer-request", { method: "POST", body: { note } }),
   deleteMe: (password) => request("/api/auth/me", { method: "DELETE", body: { password } }),
   cancelOrganizerRequest: () => request("/api/auth/me/organizer-request", { method: "DELETE" }),
-  changePassword: (current_password, new_password) =>
-    request("/api/auth/me/password", { method: "POST", body: { current_password, new_password } }),
+  // Po změně hesla server zneplatní staré tokeny (odhlásí ostatní zařízení) a vrátí nový pro toto zařízení.
+  async changePassword(current_password, new_password) {
+    const res = await request("/api/auth/me/password", { method: "POST", body: { current_password, new_password } });
+    if (res?.access_token) setToken(res.access_token);
+    return res;
+  },
 
   // uživatelé (admin)
   listUsers: (params = {}) => request(`/api/users${qs(params)}`),

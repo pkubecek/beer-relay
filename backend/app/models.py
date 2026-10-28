@@ -57,6 +57,8 @@ class User(UserBase, table=True):
     organizer_request_note: Optional[str] = None
     hide_from_ranking: bool = False  # závodník se nechce zobrazovat v rankingu
     racer_code: Optional[str] = Field(default=None, index=True)  # 6místný kód pro zapsání do sestavy
+    # kdy se naposledy měnilo heslo – starší přihlašovací tokeny pak přestanou platit
+    password_changed_at: Optional[datetime] = None
 
     @property
     def full_name(self) -> str:
