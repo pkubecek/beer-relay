@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../lib/api";
-import { Badge, Button, Card, Input, Label, Select } from "../components/ui";
+import { Badge, Button, Card, Input, Label, Select, PageHero } from "../components/ui";
 import { formatDate, ROLE_LABELS } from "../lib/format";
 import ProfileFields from "../components/ProfileFields";
 
@@ -40,7 +40,7 @@ function EditUser({ user, onSaved, onCancel }) {
   }
 
   return (
-    <form onSubmit={save} className="space-y-4 mt-4 pt-4 border-t border-wood/15">
+    <form onSubmit={save} className="space-y-4 mt-4 pt-4 border-t border-line">
       {error && <p className="text-punch text-sm">{error}</p>}
       <div className="grid sm:grid-cols-2 gap-4">
         <div>
@@ -190,18 +190,21 @@ export default function AdminUsersPage() {
 
   return (
     <div>
-      <div className="flex items-end justify-between gap-3 flex-wrap mb-2">
-        <h1 className="font-display text-4xl font-extrabold uppercase tracking-tight">Uživatelé</h1>
-        {users && <span className="text-sm text-forest-700/60 font-mono">{users.length} účtů</span>}
-      </div>
-      <p className="text-sm text-forest-700/70 mb-6 max-w-2xl">
-        Každý účet je <strong>Závodník</strong> – může přihlašovat týmy. Zaškrtnutím „Může zakládat závody“ mu dáš právo
-        zakládat a spravovat vlastní závody.
-      </p>
+      <PageHero
+        size="md"
+        eyebrow={users ? `Administrace · ${users.length} účtů` : "Administrace"}
+        title="Uživatelé"
+        subtitle={
+          <span className="text-base">
+            Každý účet je <strong className="text-foam">Závodník</strong> – může přihlašovat týmy. Zaškrtnutím „Může zakládat
+            závody“ mu dáš právo zakládat a spravovat vlastní závody.
+          </span>
+        }
+      />
       {requests.length > 0 && (
-        <Card className="p-4 mb-6 border-gold bg-gold/10">
-          <h2 className="font-display text-lg font-bold uppercase mb-3">Žádosti o pořádání ({requests.length})</h2>
-          <div className="divide-y divide-wood/15">
+        <Card className="p-5 mb-6 border-gold/60 bg-gold-50">
+          <h2 className="font-display text-lg font-bold mb-3">Žádosti o pořádání ({requests.length})</h2>
+          <div className="divide-y divide-line">
             {requests.map((u) => (
               <div key={u.id} className="py-2 flex items-start justify-between gap-3 flex-wrap">
                 <div className="min-w-0">

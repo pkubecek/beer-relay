@@ -7,14 +7,22 @@ html {
 }
 
 body {
-  @apply bg-foam text-forest-900 font-body;
-  background-image:
-    radial-gradient(circle at 1px 1px, rgba(31,42,28,0.06) 1px, transparent 0);
-  background-size: 22px 22px;
+  @apply bg-foam text-forest-900 font-body antialiased;
+}
+
+/* čísla v časech a počtech se nemají „vlnit“ */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* tmavý pruh přes celou šířku (pokračování hlavičky) */
+.full-bleed {
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
 }
 
 .leg-marker {
-  @apply relative flex items-center justify-center w-9 h-9 rounded-full border-2 border-wood bg-foam font-mono font-semibold text-sm text-forest-900 shrink-0;
+  @apply relative flex items-center justify-center w-9 h-9 rounded-full border-2 border-gold bg-white font-display font-bold text-sm text-forest-900 shrink-0;
 }
 
 .leg-marker.finish {
@@ -27,7 +35,7 @@ body {
 }
 
 *:focus-visible {
-  outline: 3px solid #F2C744;
+  outline: 3px solid #EFB23C;
   outline-offset: 2px;
 }
 

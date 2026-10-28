@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../lib/auth";
-import { Button, Card, Input, Label } from "../components/ui";
+import { Button, Card, Input, Label, PageHero } from "../components/ui";
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -27,8 +27,9 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="max-w-sm mx-auto mt-6">
-      <h1 className="font-display text-3xl font-extrabold uppercase mb-6 text-center">Přihlášení</h1>
+    <div>
+      <PageHero overlap size="md" eyebrow="Vítej zpátky" title="Přihlášení" subtitle="Přihlas se a spravuj své týmy a přihlášky." />
+      <div className="max-w-sm">
       <Card className="p-6">
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && <p className="text-punch text-sm">{error}</p>}
@@ -54,6 +55,7 @@ export default function LoginPage() {
         </Link>
       </p>
       <p className="text-xs text-center mt-2 text-forest-700/50">Zapomenuté heslo ti obnoví pořadatel nebo admin.</p>
+      </div>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../lib/api";
-import { Badge, Button, Card } from "../components/ui";
+import { Badge, Button, Card, PageHero } from "../components/ui";
 import { formatDate, TEAM_STATUS_LABELS, TEAM_STATUS_TONE } from "../lib/format";
 
 export default function MyEntriesPage() {
@@ -14,7 +14,7 @@ export default function MyEntriesPage() {
 
   return (
     <div>
-      <h1 className="font-display text-4xl font-extrabold uppercase tracking-tight mb-6">Moje přihlášky</h1>
+      <PageHero overlap eyebrow="Týmy, ve kterých běžíš" title="Moje přihlášky" subtitle="Přehled tvých týmů – sestavu můžeš jako kapitán upravovat až do uzávěrky." />
       {error && <p className="text-punch">{error}</p>}
       {entries === null && !error && <p className="text-forest-700/60">Načítám…</p>}
       {entries?.length === 0 && (
@@ -22,15 +22,15 @@ export default function MyEntriesPage() {
           Zatím nejsi v žádném týmu. <Link to="/" className="text-wood font-semibold hover:underline">Vyber si závod</Link>.
         </Card>
       )}
-      <div className="grid gap-3">
+      <div className="grid grid-cols-1 gap-3 max-w-4xl">
         {entries?.map((e) => (
-          <Card key={e.id} className="p-4">
+          <Card key={e.id} className="p-5">
             <div className="flex items-start justify-between gap-3 flex-wrap">
               <div className="min-w-0">
-                <Link to={`/zavody/${e.event_slug}`} className="text-xs font-mono uppercase text-wood hover:underline">
+                <Link to={`/zavody/${e.event_slug}`} className="text-xs font-semibold text-wood hover:underline">
                   {e.event_name} {e.event_date && `· ${formatDate(e.event_date)}`}
                 </Link>
-                <p className="font-display text-2xl font-bold uppercase leading-tight">
+                <p className="font-display text-2xl font-bold tracking-tight leading-tight mt-0.5">
                   {e.start_number != null && <span className="text-wood font-mono text-lg mr-2">#{e.start_number}</span>}
                   {e.name}
                 </p>

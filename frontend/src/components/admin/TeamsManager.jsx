@@ -90,7 +90,7 @@ export default function TeamsManager({ event, teams, legs, categories, onChange 
             <div className="flex items-start justify-between gap-3 flex-wrap">
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <p className="font-display font-bold text-lg uppercase">{t.name}</p>
+                  <p className="font-display font-bold text-lg">{t.name}</p>
                   <Badge tone={TEAM_STATUS_TONE[t.status]}>{TEAM_STATUS_LABELS[t.status]}</Badge>
                   {t.club && <span className="text-xs text-forest-700/60">{t.club}</span>}
                 </div>

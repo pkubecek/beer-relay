@@ -2,7 +2,7 @@ import { Fragment, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../lib/api";
 import { useAuth } from "../lib/auth";
-import { Card, Select } from "../components/ui";
+import { Card, PageHero, Select } from "../components/ui";
 
 const shortDate = (d) => new Date(d + "T00:00:00").toLocaleDateString("cs-CZ");
 
@@ -23,19 +23,24 @@ export default function RankingPage() {
 
   return (
     <div>
-      <div className="flex items-end justify-between flex-wrap gap-3 mb-6">
-        <h1 className="font-display text-4xl md:text-5xl font-extrabold uppercase tracking-tight">Ranking</h1>
-        {data && (
-          <div className="w-32">
-            <Select value={data.year} onChange={(e) => { setYear(Number(e.target.value)); setOpenId(null); }}>
-              {years.map((y) => <option key={y} value={y}>Sezóna {y}</option>)}
-            </Select>
-          </div>
-        )}
-      </div>
+      <PageHero
+        overlap
+        eyebrow="Sezónní žebříček závodníků"
+        title="Ranking"
+        subtitle="Body za umístění týmu dostane každý člen sestavy s účtem."
+        aside={
+          data && (
+            <div className="w-40">
+              <Select value={data.year} onChange={(e) => { setYear(Number(e.target.value)); setOpenId(null); }}>
+                {years.map((y) => <option key={y} value={y}>Sezóna {y}</option>)}
+              </Select>
+            </div>
+          )
+        }
+      />
 
       {data && (
-        <Card className="p-4 mb-6 text-sm text-forest-700/80">
+        <Card className="p-4 mb-4 text-sm text-forest-700/80">
           Body za pořadí týmu:{" "}
           {Object.entries(data.place_points).map(([place, pts], i) => (
             <span key={place} className="whitespace-nowrap">
@@ -53,15 +58,15 @@ export default function RankingPage() {
       )}
 
       {data?.rows.length > 0 && (
-        <div className="overflow-x-auto">
+        <Card className="overflow-x-auto">
           <table className="w-full text-sm border-collapse">
             <thead>
-              <tr className="border-b-2 border-forest-900 text-left font-display uppercase text-xs tracking-wide text-wood">
-                <th className="py-2 pr-2 w-12">#</th>
+              <tr className="border-b border-line text-left uppercase text-[11px] tracking-[0.14em] text-forest-700/50">
+                <th className="py-3 pl-4 pr-2 w-14">#</th>
                 <th className="py-2 pr-2">Závodník</th>
                 <th className="py-2 px-2 text-center hidden sm:table-cell">Závody</th>
                 <th className="py-2 px-2 text-center hidden sm:table-cell">Výhry</th>
-                <th className="py-2 pl-2 text-right">Body</th>
+                <th className="py-3 pl-2 pr-4 text-right">Body</th>
               </tr>
             </thead>
             <tbody>
@@ -72,10 +77,10 @@ export default function RankingPage() {
                   <Fragment key={row.user_id}>
                     <tr
                       onClick={() => setOpenId(isOpen ? null : row.user_id)}
-                      className={`border-b border-wood/15 cursor-pointer hover:bg-forest-50 ${isMe ? "bg-gold/15" : ""}`}
+                      className={`border-b border-line cursor-pointer hover:bg-forest-50 ${isMe ? "bg-gold-50" : ""}`}
                     >
-                      <td className="py-2 pr-2 font-bold text-wood text-base">{MEDAL[row.rank] || `${row.rank}.`}</td>
-                      <td className="py-2 pr-2">
+                      <td className="py-2.5 pl-4 pr-2 font-display font-bold text-base">{MEDAL[row.rank] || `${row.rank}.`}</td>
+                      <td className="py-2.5 pr-2">
                         <div className="font-semibold">
                           {row.name} {isMe && <span className="text-xs text-wood font-normal">(ty)</span>}
                         </div>
@@ -83,7 +88,7 @@ export default function RankingPage() {
                       </td>
                       <td className="py-2 px-2 text-center hidden sm:table-cell">{row.races}</td>
                       <td className="py-2 px-2 text-center hidden sm:table-cell">{row.wins}</td>
-                      <td className="py-2 pl-2 text-right font-display text-lg font-bold">
+                      <td className="py-2.5 pl-2 pr-4 text-right font-display text-lg font-bold">
                         {row.points}
                         <span className="ml-1 text-xs text-forest-700/50">{isOpen ? "▴" : "▾"}</span>
                       </td>
@@ -115,7 +120,7 @@ export default function RankingPage() {
               })}
             </tbody>
           </table>
-        </div>
+        </Card>
       )}
     </div>
   );

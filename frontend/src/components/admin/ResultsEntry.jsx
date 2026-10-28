@@ -77,7 +77,7 @@ export default function ResultsEntry({ event, approvedTeams, categories, onSaved
         const dup = duplicates(g.teams);
         return (
           <Card key={g.key} className="p-4">
-            {g.name && <h3 className="font-display text-lg font-bold uppercase mb-3">{g.name}</h3>}
+            {g.name && <h3 className="font-display text-lg font-bold mb-3">{g.name}</h3>}
             <div className="divide-y divide-wood/10">
               {g.teams.map((t) => {
                 const d = draftOf(t);

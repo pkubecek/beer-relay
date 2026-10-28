@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../lib/auth";
-import { Button, Card, Input, Label } from "../components/ui";
+import { Button, Card, Input, Label, PageHero } from "../components/ui";
 import ProfileFields from "../components/ProfileFields";
 
 export default function RegisterPage() {
@@ -35,9 +35,9 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="max-w-lg mx-auto mt-6">
-      <h1 className="font-display text-3xl font-extrabold uppercase mb-2 text-center">Registrace</h1>
-      <p className="text-center text-sm text-forest-700/70 mb-6">S účtem můžeš přihlašovat týmy a upravovat přihlášky do uzávěrky.</p>
+    <div>
+      <PageHero overlap size="md" eyebrow="Nový účet" title="Registrace" subtitle="S účtem můžeš přihlašovat týmy a upravovat přihlášky do uzávěrky." />
+      <div className="max-w-lg">
       <Card className="p-6">
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && <p className="text-punch text-sm">{error}</p>}
@@ -73,6 +73,7 @@ export default function RegisterPage() {
           Přihlas se
         </Link>
       </p>
+      </div>
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { PageHero } from "../components/ui";
 
 // ⚠️ Doplňte před zveřejněním údaje o správci. Pole, která necháte prázdná (""), se na stránce nezobrazí.
 const CONTROLLER = {
@@ -19,7 +20,7 @@ function Article({ no, title, children }) {
     <section className="mb-8">
       <h2 className="font-display text-center mb-3">
         <span className="block text-sm font-bold text-wood">{no}.</span>
-        <span className="block text-xl font-bold uppercase">{title}</span>
+        <span className="block text-xl font-bold">{title}</span>
       </h2>
       <ol className="list-decimal pl-6 space-y-3 text-sm leading-relaxed text-forest-900 marker:font-semibold">
         {children}
@@ -35,11 +36,9 @@ export default function PrivacyPage() {
   const mail = <a className="text-wood underline" href={`mailto:${c.email}`}>{c.email}</a>;
 
   return (
-    <div className="max-w-3xl">
-      <h1 className="font-display text-4xl md:text-5xl font-extrabold uppercase tracking-tight mb-2">
-        Zásady ochrany osobních údajů
-      </h1>
-      <p className="text-sm text-forest-700/70 mb-10">webu Pivní štafety</p>
+    <div>
+      <PageHero size="md" eyebrow="Právní informace" title="Zásady ochrany osobních údajů" subtitle="webu Pivní štafety" />
+      <div className="max-w-3xl bg-white border border-line rounded-2xl shadow-card p-6 sm:p-10">
 
       <Article no="I" title="Základní ustanovení">
         <li>
@@ -224,6 +223,7 @@ export default function PrivacyPage() {
       </Article>
 
       <p className="text-sm text-forest-700/70 text-center">Tyto zásady nabývají účinnosti dnem {EFFECTIVE_FROM}.</p>
+      </div>
     </div>
   );
 }

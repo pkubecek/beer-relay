@@ -89,7 +89,7 @@ export default function EventSettings({ event, onSaved }) {
     <form onSubmit={handleSubmit} className="space-y-6">
       {error && <p className="text-punch text-sm">{error}</p>}
       <Card className="p-5 space-y-4">
-        <h3 className="font-display text-lg font-bold uppercase">Základní údaje</h3>
+        <h3 className="font-display text-lg font-bold">Základní údaje</h3>
         <div className="grid sm:grid-cols-2 gap-4">
           <div className="sm:col-span-2">
             <Label required>Název</Label>
@@ -99,7 +99,7 @@ export default function EventSettings({ event, onSaved }) {
             <Label>Adresa (slug)</Label>
             <Input value={form.slug} onChange={(e) => update("slug", e.target.value)} />
           </div>
-          <div className="rounded-md bg-punch/10 ring-1 ring-punch/30 p-2 -m-2">
+          <div className="rounded-xl bg-punch/10 ring-1 ring-punch/30 p-2 -m-2">
             <Label required>Stav</Label>
             <Select value={form.status} onChange={(e) => update("status", e.target.value)}>
               {Object.entries(STATUS_LABELS).map(([k, v]) => (
@@ -146,7 +146,7 @@ export default function EventSettings({ event, onSaved }) {
       </Card>
 
       <Card className="p-5 space-y-4">
-        <h3 className="font-display text-lg font-bold uppercase">Přihlášky</h3>
+        <h3 className="font-display text-lg font-bold">Přihlášky</h3>
         <p className="text-xs text-forest-700/60">
           Přihlašovat se dá, když je stav „Přihlášky otevřeny“ a zároveň jsi v rozmezí termínů a není naplněná kapacita.
         </p>

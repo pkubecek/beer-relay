@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { api } from "../lib/api";
-import { Badge } from "../components/ui";
+import { Badge, PageHero, Segmented } from "../components/ui";
 import { EVENT_STATUS_TONE, STATUS_LABELS } from "../lib/format";
 import EventSettings from "../components/admin/EventSettings";
 import CategoriesManager from "../components/admin/CategoriesManager";
@@ -53,31 +53,28 @@ export default function AdminEventPage() {
 
   return (
     <div>
-      <Link to="/admin" className="text-sm text-wood hover:underline">← Zpět na přehled</Link>
-      <div className="flex items-center justify-between gap-3 flex-wrap mt-2 mb-6">
-        <h1 className="font-display text-4xl font-extrabold uppercase tracking-tight">{event.name}</h1>
-        <div className="flex items-center gap-2">
-          <Badge tone={EVENT_STATUS_TONE[event.status]}>{STATUS_LABELS[event.status]}</Badge>
-          {event.status !== "draft" && (
-            <Link to={`/zavody/${event.slug}`} className="text-sm text-wood hover:underline">Veřejná stránka ↗</Link>
-          )}
-        </div>
-      </div>
+      <PageHero
+        overlap
+        size="md"
+        crumbs={[{ label: "Správa závodů", to: "/admin" }, { label: event.name }]}
+        badges={<Badge tone={EVENT_STATUS_TONE[event.status]}>{STATUS_LABELS[event.status]}</Badge>}
+        title={event.name}
+        actions={
+          event.status !== "draft" && (
+            <Link to={`/zavody/${event.slug}`} className="rounded-xl border border-white/20 hover:border-gold hover:text-gold px-4 py-2 text-sm font-semibold transition-colors">
+              Veřejná stránka ↗
+            </Link>
+          )
+        }
+      />
 
-      <div className="flex gap-1 border-b border-wood/20 mb-6 overflow-x-auto">
-        {SECTIONS.map((s) => (
-          <button
-            key={s.key}
-            onClick={() => setSection(s.key)}
-            className={`px-4 py-2 text-sm font-semibold uppercase tracking-wide whitespace-nowrap transition-colors ${
-              section === s.key ? "border-b-2 border-gold text-forest-900" : "text-forest-700/50 hover:text-forest-900"
-            }`}
-          >
-            {s.label}
-            {s.key === "teams" && ` (${teams.length})`}
-          </button>
-        ))}
-      </div>
+      <Segmented
+        options={SECTIONS.map((s) => ({ key: s.key, label: s.key === "teams" ? `${s.label} · ${teams.length}` : s.label }))}
+        value={section}
+        onChange={setSection}
+        className="mb-6"
+      />
+
 
       {section === "settings" && <EventSettings key={event.id} event={event} onSaved={(ev) => setEvent(ev)} />}
       {section === "categories" && <CategoriesManager eventId={event.id} categories={categories} onChange={loadAll} />}

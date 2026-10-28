@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
-import { Button, Card, Badge, Input, Label } from "../components/ui";
+import { Button, Card, Badge, Input, Label, PageHero } from "../components/ui";
 import { EVENT_STATUS_TONE, formatDate, STATUS_LABELS } from "../lib/format";
 
 export default function AdminDashboardPage() {
@@ -31,10 +31,13 @@ export default function AdminDashboardPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
-        <h1 className="font-display text-4xl font-extrabold uppercase tracking-tight">Správa závodů</h1>
-        <Button onClick={() => setShowForm((s) => !s)}>{showForm ? "Zavřít" : "+ Nový závod"}</Button>
-      </div>
+      <PageHero
+        overlap
+        eyebrow="Pro pořadatele"
+        title="Správa závodů"
+        subtitle="Termíny, úseky, kategorie, přihlášky i výsledky na jednom místě."
+        aside={<Button size="lg" onClick={() => setShowForm((s) => !s)}>{showForm ? "Zavřít" : "+ Nový závod"}</Button>}
+      />
 
       {error && <p className="text-punch mb-4">{error}</p>}
 
@@ -63,13 +66,13 @@ export default function AdminDashboardPage() {
 
       {events === null && !error && <p className="text-forest-700/60">Načítám…</p>}
       {events?.length === 0 && <Card className="p-6 text-forest-700/60 text-sm">Zatím nespravuješ žádný závod.</Card>}
-      <div className="grid gap-3">
+      <div className="grid grid-cols-1 gap-3">
         {events?.map((ev) => (
           <Link key={ev.id} to={`/admin/zavody/${ev.slug}`}>
             <Card className="p-4 flex items-center justify-between gap-3 hover:border-gold transition-colors">
               <div className="min-w-0">
-                <p className="font-display text-xl font-bold uppercase truncate">{ev.name}</p>
-                <p className="text-xs text-forest-700/60 font-mono">
+                <p className="font-display text-xl font-bold tracking-tight truncate">{ev.name}</p>
+                <p className="text-sm text-forest-700/60">
                   {ev.event_date ? formatDate(ev.event_date) : "bez data"} {ev.location && `· ${ev.location}`} · {ev.team_count} týmů
                   {ev.organizer_name && ` · ${ev.organizer_name}`}
                 </p>

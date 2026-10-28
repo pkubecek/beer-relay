@@ -128,7 +128,7 @@ export default function TeamRegistrationForm({ legs, categories, initial, user, 
         ) : (
           <div className="space-y-2">
             {legs.map((leg, i) => (
-              <div key={leg.id} className="flex flex-col sm:flex-row sm:items-center gap-2 bg-forest-50 rounded-md p-2">
+              <div key={leg.id} className="flex flex-col sm:flex-row sm:items-center gap-2 bg-forest-50 rounded-xl p-2">
                 <div className="flex items-center gap-2 sm:w-44 shrink-0">
                   <span className="leg-marker !w-7 !h-7 !text-xs">{leg.order}</span>
                   <span className="text-sm font-semibold truncate">{legLabel(leg)}</span>

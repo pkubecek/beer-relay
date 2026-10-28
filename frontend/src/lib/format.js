@@ -69,5 +69,61 @@ export const ROLE_LABELS = {
   admin: "Admin",
 };
 
-export const EVENT_STATUS_TONE = { draft: "neutral", open: "leaf", closed: "gold", finished: "neutral" };
+export const EVENT_STATUS_TONE = { draft: "neutral", open: "leaf", closed: "gold", finished: "violet" };
 export const TEAM_STATUS_TONE = { pending: "gold", approved: "leaf", rejected: "punch" };
+
+/** „bře 2027“ + „14“ pro dlaždici s datem. */
+export function dateParts(dateStr) {
+  if (!dateStr) return null;
+  const d = new Date(dateStr + "T00:00:00");
+  return {
+    day: d.getDate(),
+    month: d.toLocaleDateString("cs-CZ", { month: "short" }).replace(".", ""),
+    year: d.getFullYear(),
+    weekday: d.toLocaleDateString("cs-CZ", { weekday: "long" }),
+  };
+}
+
+/** „Sobota 14. března 2027“ */
+export function formatLongDate(dateStr) {
+  if (!dateStr) return "";
+  const d = new Date(dateStr + "T00:00:00");
+  const s = d.toLocaleDateString("cs-CZ", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+/** „7. 3.“ */
+export function formatShortDate(value) {
+  if (!value) return "";
+  const d = new Date(value);
+  return `${d.getDate()}. ${d.getMonth() + 1}.`;
+}
+
+/** Kolik dní zbývá do daného okamžiku (null, když už je po něm). */
+export function daysLeft(value) {
+  if (!value) return null;
+  const diff = new Date(value).getTime() - Date.now();
+  if (diff < 0) return null;
+  return Math.floor(diff / 86400000);
+}
+
+/** „zbývá 12 dní“ / „zbývá 1 den“ / „končí dnes“ */
+export function daysLeftLabel(value) {
+  const n = daysLeft(value);
+  if (n === null) return "uzavřeno";
+  if (n === 0) return "končí dnes";
+  if (n === 1) return "zbývá 1 den";
+  if (n < 5) return `zbývají ${n} dny`;
+  return `zbývá ${n} dní`;
+}
+
+/** Skloňování: plural(3, "tým", "týmy", "týmů") */
+export function plural(n, one, few, many) {
+  if (n === 1) return one;
+  if (n >= 2 && n <= 4) return few;
+  return many;
+}
+
+export function isFull(ev) {
+  return !!ev?.max_teams && ev.team_count >= ev.max_teams;
+}

@@ -136,7 +136,7 @@ export function MapPicker({ lat, lon, onChange }) {
       </div>
       {error && <p className="text-xs text-punch">{error}</p>}
       {results.length > 0 && (
-        <ul className="border border-wood/20 rounded-md bg-white divide-y divide-wood/10 text-sm max-h-48 overflow-auto">
+        <ul className="border border-line rounded-xl bg-white divide-y divide-wood/10 text-sm max-h-48 overflow-auto">
           {results.map((r) => (
             <li key={r.place_id}>
               <button type="button" onClick={() => choose(r)} className="w-full text-left px-3 py-2 hover:bg-forest-50">
@@ -146,7 +146,7 @@ export function MapPicker({ lat, lon, onChange }) {
           ))}
         </ul>
       )}
-      <div ref={el} className="h-72 rounded-md border border-wood/30 isolate" />
+      <div ref={el} className="h-72 rounded-xl border border-line isolate" />
       <div className="flex items-center justify-between text-xs text-forest-700/60">
         <span>
           {hasPoint ? `📍 ${lat.toFixed(5)}, ${lon.toFixed(5)} – značku můžeš přetáhnout` : "Klikni do mapy na místo startu / srazu."}
@@ -175,7 +175,7 @@ export function EventMap({ lat, lon, label }) {
 
   return (
     <div>
-      <div ref={el} className="h-56 rounded-md border border-wood/30 isolate" />
+      <div ref={el} className="h-56 rounded-xl border border-line isolate" />
       <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs mt-1.5">
         <a className="text-wood hover:underline" target="_blank" rel="noreferrer"
           href={`https://mapy.cz/turisticka?q=${lat},${lon}&x=${lon}&y=${lat}&z=15`}>

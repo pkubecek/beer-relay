@@ -52,7 +52,7 @@ export default function LegsManager({ eventId, legs, onChange }) {
         {legs.length === 0 && <p className="text-sm text-forest-700/60">Zatím žádné úseky.</p>}
       </div>
 
-      <form onSubmit={handleAdd} className="flex flex-wrap items-end gap-3 bg-forest-50 p-3 rounded-md">
+      <form onSubmit={handleAdd} className="flex flex-wrap items-end gap-3 bg-forest-50 p-3 rounded-xl">
         {error && <p className="text-punch text-xs w-full">{error}</p>}
         <div className="w-20">
           <Label>Pořadí</Label>

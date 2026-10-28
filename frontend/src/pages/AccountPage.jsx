@@ -2,7 +2,7 @@ import { useState } from "react";
 import { api } from "../lib/api";
 import { useAuth } from "../lib/auth";
 import { formatDate, ROLE_LABELS } from "../lib/format";
-import { Badge, Button, Card, Input, Label, Textarea } from "../components/ui";
+import { Badge, Button, Card, Input, Label, PageHero, Textarea } from "../components/ui";
 import { Link, useNavigate } from "react-router-dom";
 import ProfileFields from "../components/ProfileFields";
 
@@ -25,8 +25,8 @@ function OrganizerRequestCard({ user, setUser }) {
 
   if (user.role !== "user") {
     return (
-      <Card className="p-6 mb-6 bg-leaf/5 border-leaf/30">
-        <h2 className="font-display text-xl font-bold uppercase mb-1">Pořádání závodů</h2>
+      <Card className="p-6 mb-6 bg-[#F1F8F3] border-leaf/30 scroll-mt-24" id="poradani">
+        <h2 className="font-display text-xl font-bold mb-1">Pořádání závodů</h2>
         <p className="text-sm">
           Můžeš zakládat a spravovat závody v <Link to="/admin" className="text-wood font-semibold hover:underline">Správě závodů</Link>.
         </p>
@@ -35,8 +35,8 @@ function OrganizerRequestCard({ user, setUser }) {
   }
 
   return (
-    <Card className="p-6 mb-6">
-      <h2 className="font-display text-xl font-bold uppercase mb-1">Pořádání závodů</h2>
+    <Card className="p-6 mb-6 scroll-mt-24" id="poradani">
+      <h2 className="font-display text-xl font-bold mb-1">Pořádání závodů</h2>
       {error && <p className="text-punch text-sm mb-2">{error}</p>}
       {user.organizer_request_at ? (
         <div className="space-y-3">
@@ -82,10 +82,10 @@ function RacerCodeCard({ code }) {
     }
   }
   return (
-    <Card className="p-6 mb-6 bg-gold/10 border-gold/50">
+    <Card className="p-6 mb-6 bg-gold-50 border-gold/50">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <h2 className="font-display text-xl font-bold uppercase mb-1">Kód závodníka</h2>
+          <h2 className="font-display text-xl font-bold mb-1">Kód závodníka</h2>
           <p className="text-sm text-forest-700/70 max-w-md">
             Dej ho kapitánovi – zadá ho do přihlášky místo e-mailu a výsledky se ti připíšou do účtu i rankingu.
           </p>
@@ -94,7 +94,7 @@ function RacerCodeCard({ code }) {
           type="button"
           onClick={copy}
           title="Zkopírovat"
-          className="font-display text-3xl font-bold tracking-[0.2em] bg-white border-2 border-forest-900 rounded-md px-4 py-2 hover:bg-forest-50"
+          className="font-display text-3xl font-bold tracking-[0.2em] bg-white border-2 border-forest-900 rounded-xl px-4 py-2 hover:bg-forest-50"
         >
           {code}
           <span className="block text-[10px] tracking-normal font-normal text-forest-700/60">{copied ? "zkopírováno ✓" : "klikni pro zkopírování"}</span>
@@ -128,7 +128,7 @@ function DeleteAccountCard() {
 
   return (
     <Card className="p-6 mt-6 border-punch/30">
-      <h2 className="font-display text-xl font-bold uppercase mb-1 text-punch">Smazání účtu</h2>
+      <h2 className="font-display text-xl font-bold mb-1 text-punch">Smazání účtu</h2>
       {!open ? (
         <div className="space-y-3">
           <p className="text-sm text-forest-700/70">Účet a údaje z profilu nenávratně smažeš.</p>
@@ -195,18 +195,22 @@ export default function AccountPage() {
   }
 
   return (
-    <div className="max-w-2xl">
-      <div className="flex items-center gap-3 flex-wrap mb-6">
-        <h1 className="font-display text-4xl font-extrabold uppercase tracking-tight">Můj účet</h1>
-        <Badge tone="gold">{ROLE_LABELS[user.role]}</Badge>
-      </div>
+    <div>
+      <PageHero
+        overlap
+        size="md"
+        badges={<Badge tone="gold">{ROLE_LABELS[user.role]}</Badge>}
+        title="Můj účet"
+        subtitle={`${user.first_name} ${user.last_name} · ${user.email}`}
+      />
+      <div className="max-w-2xl">
 
       <RacerCodeCard code={user.racer_code} />
 
       <OrganizerRequestCard user={user} setUser={setUser} />
 
       <Card className="p-6 mb-6">
-        <h2 className="font-display text-xl font-bold uppercase mb-1">Profil</h2>
+        <h2 className="font-display text-xl font-bold mb-1">Profil</h2>
         <p className="text-sm text-forest-700/60 mb-4 font-mono">{user.email}</p>
         <form onSubmit={saveProfile} className="space-y-4">
           {err.profile && <p className="text-punch text-sm">{err.profile}</p>}
@@ -223,7 +227,7 @@ export default function AccountPage() {
       </Card>
 
       <Card className="p-6">
-        <h2 className="font-display text-xl font-bold uppercase mb-4">Změna hesla</h2>
+        <h2 className="font-display text-xl font-bold mb-4">Změna hesla</h2>
         <form onSubmit={savePassword} className="space-y-4">
           {err.password && <p className="text-punch text-sm">{err.password}</p>}
           <div className="grid sm:grid-cols-2 gap-4">
@@ -246,6 +250,7 @@ export default function AccountPage() {
       </Card>
 
       {user.role !== "admin" && <DeleteAccountCard />}
+      </div>
     </div>
   );
 }

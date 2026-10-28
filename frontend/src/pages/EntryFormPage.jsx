@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { api } from "../lib/api";
 import { useAuth } from "../lib/auth";
-import { Button, Card } from "../components/ui";
+import { Button, Card, PageHero } from "../components/ui";
 import { formatDate, formatDateTime, formatMoney } from "../lib/format";
 import TeamRegistrationForm from "../components/TeamRegistrationForm";
 
@@ -59,15 +59,15 @@ export default function EntryFormPage() {
 
   if (done) {
     return (
-      <Card className="p-6 max-w-xl">
-        <p className="font-display text-2xl font-bold uppercase mb-2">🎉 Tým {done.name} je přihlášen!</p>
+      <Card className="p-6 sm:p-8 max-w-xl mx-auto mt-6 text-center">
+        <p className="font-display text-2xl font-bold mb-2">🎉 Tým {done.name} je přihlášen!</p>
         <p className="text-sm text-forest-700/80 mb-4">
           {done.status === "pending"
             ? "Přihláška teď čeká na schválení pořadatelem."
             : "Přihláška je rovnou potvrzená."}{" "}
           {event.entry_fee != null && `Startovné ${formatMoney(event.entry_fee)} za tým – pokyny k platbě dá pořadatel.`}
         </p>
-        <div className="flex gap-3 flex-wrap">
+        <div className="flex gap-3 flex-wrap justify-center">
           <Link to="/moje-prihlasky"><Button>Moje přihlášky</Button></Link>
           <Link to={`/zavody/${event.slug}`}><Button variant="outline">Zpět na závod</Button></Link>
         </div>
@@ -79,16 +79,19 @@ export default function EntryFormPage() {
     !(event.entry_deadline && new Date(event.entry_deadline) < new Date()));
 
   return (
-    <div className="max-w-3xl">
-      <Link to={`/zavody/${event.slug}`} className="text-sm text-wood hover:underline">← {event.name}</Link>
-      <h1 className="font-display text-4xl font-extrabold uppercase tracking-tight mt-2">
-        {isEdit ? "Úprava přihlášky" : "Přihláška týmu"}
-      </h1>
-      <p className="text-sm text-forest-700/70 font-mono mb-6">
-        {event.event_date && formatDate(event.event_date)}
-        {event.entry_deadline && ` · uzávěrka ${formatDateTime(event.entry_deadline)}`}
-        {event.entry_fee != null && ` · startovné ${formatMoney(event.entry_fee)}`}
-      </p>
+    <div>
+      <PageHero
+        overlap
+        size="md"
+        crumbs={[{ label: "Kalendář závodů", to: "/" }, { label: event.name, to: `/zavody/${event.slug}` }, { label: isEdit ? "Úprava" : "Přihláška" }]}
+        title={isEdit ? "Úprava přihlášky" : "Přihláška týmu"}
+        subtitle={[
+          event.event_date && formatDate(event.event_date),
+          event.entry_deadline && `uzávěrka ${formatDateTime(event.entry_deadline)}`,
+          event.entry_fee != null && `startovné ${formatMoney(event.entry_fee)}`,
+        ].filter(Boolean).join(" · ")}
+      />
+      <div className="max-w-3xl">
 
       {!isEdit && !event.registration_open && !event.can_manage ? (
         <Card className="p-5 text-sm">{event.registration_message}</Card>
@@ -110,12 +113,13 @@ export default function EntryFormPage() {
             submitLabel={isEdit ? "Uložit změny" : "Přihlásit tým"}
           />
           {isEdit && (
-            <div className="border-t border-wood/20 mt-6 pt-4">
+            <div className="border-t border-line mt-6 pt-4">
               <Button variant="danger" onClick={handleDelete}>Zrušit přihlášku</Button>
             </div>
           )}
         </Card>
       )}
+      </div>
     </div>
   );
 }
